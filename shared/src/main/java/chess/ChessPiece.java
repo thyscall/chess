@@ -9,6 +9,10 @@ import java.util.Collection;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
+
+/**
+ * See Phase 0 Design Tips video for visual + flowchart of additional PieceMovesCalculator class implementation
+ */
 public class ChessPiece {
 
 

@@ -9,6 +9,11 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
+
+/**
+ * See Phase 0 Design Tips video for visual
+ */
+
 public class ChessBoard {
     private ChessPiece[][] squares =  new ChessPiece[8][8];
     public ChessBoard() {

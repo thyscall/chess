@@ -37,21 +37,21 @@ public class Bishop extends ChessPiece {
                     break; // stop checking, break the loop
                 }
 
-                ChessPosition newPosition = new ChessPosition(row, col); // var to hold value for piece's new position
-                ChessPiece pieceNewPosition = board.getPiece(newPosition); // set new position
+                ChessPosition newPos = new ChessPosition(row, col); // var to hold value for piece's new position
+                ChessPiece pieceNewPosition = board.getPiece(newPos); // set new position
 
                 // check to see if there is a piece in the new piece position
                 if (pieceNewPosition == null) {
-                    validMoves.add(new ChessMove(myPosition, newPos));
+                    validMoves.add(new ChessMove(myPosition, newPos, null));
                 } else {
-                // is the piece and an opponent's piece?
+                    // is the piece and an opponent's piece?
                     if (pieceNewPosition.getTeamColor() != this.getTeamColor()) {
-                        validMoves.add(new ChessMove(myPosition, newPos)); // capture opponent piece
+                        validMoves.add(new ChessMove(myPosition, newPos, null)); // capture opponent piece
                     }
                     break; // stop when opponent piece is captured
                 }
             }
-            return validMoves;
         }
+        return validMoves;
     }
 }

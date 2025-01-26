@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
 
+/*
+* Bishop piece & moves
+ */
+
 public class Bishop extends ChessPiece {
 
     //Set the team color and which piece
@@ -16,14 +20,14 @@ public class Bishop extends ChessPiece {
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> validMoves = new ArrayList<>();
 
-        // where can a Bishop move?
+        // where can a Bishop move? Diagonal
         int[][] directions = {
                 {1, 1}, // Up - right as both y and x increase
                 {1, -1}, // Up - left when y increases and x decreases
                 {-1, 1}, // Down - right when y decreases and x increases
                 {-1, -1}, // Down - right when both y and x decrease
         };
-
+        // check diagonal move
         for (int[] direction : directions) {
             int row = myPosition.getRow();
             int col = myPosition.getColumn();
@@ -38,14 +42,15 @@ public class Bishop extends ChessPiece {
                 }
 
                 ChessPosition newPos = new ChessPosition(row, col); // var to hold value for piece's new position
-                ChessPiece pieceNewPosition = board.getPiece(newPos); // set new position
+                ChessPiece pieceNewPos = board.getPiece(newPos); // set new position
 
                 // check to see if there is a piece in the new piece position
-                if (pieceNewPosition == null) {
+                if (pieceNewPos == null) {
+                    // able to move to empty square, add new position to valid moves
                     validMoves.add(new ChessMove(myPosition, newPos, null));
                 } else {
                     // is the piece and an opponent's piece?
-                    if (pieceNewPosition.getTeamColor() != this.getTeamColor()) {
+                    if (pieceNewPos.getTeamColor() != this.getTeamColor()) {
                         validMoves.add(new ChessMove(myPosition, newPos, null)); // capture opponent piece
                     }
                     break; // stop when opponent piece is captured

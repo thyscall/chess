@@ -18,25 +18,12 @@ public class ChessPiece {
     private ChessGame.TeamColor teamColor;
     private PieceType pieceType;
 
+    // Constructor
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.teamColor = pieceColor;
         this.pieceType = type;
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
-    public String toString() {
-        return "ChessPiece{}";
-    }
 
     /**
      * The various different chess piece options
@@ -54,7 +41,6 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-
         return teamColor;
     }
 
@@ -62,7 +48,6 @@ public class ChessPiece {
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-
         return pieceType;
     }
 

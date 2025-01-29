@@ -45,12 +45,27 @@ public class ChessMove {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        int result = startPosition.hashCode();
+        result = 71 * result + endPosition.hashCode();
+        if (promotionPiece != null) {
+            result = 71 * result + promotionPiece.hashCode();
+        }else {
+            result = 71 * result;
+        }
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        return super.equals(obj);
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        ChessMove other = (ChessMove) obj;
+        return startPosition.equals(other.startPosition) &&
+                endPosition.equals(other.endPosition) &&
+                (promotionPiece == null && other.promotionPiece == null) ||
+                (promotionPiece != null && promotionPiece.equals(other.promotionPiece));
+
     }
 
     @Override

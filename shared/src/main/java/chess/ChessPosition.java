@@ -43,6 +43,7 @@ public class ChessPosition {
         return row == that.row && column == that.column;
     }
 
+    // Implement hashCode?
     @Override
     public int hashCode() {
         return Objects.hash(row, column);

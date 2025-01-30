@@ -25,7 +25,7 @@ public class Bishop extends ChessPiece {
                 {1, 1}, // Up - right as both y and x increase
                 {1, -1}, // Up - left when y increases and x decreases
                 {-1, 1}, // Down - right when y decreases and x increases
-                {-1, -1}, // Down - right when both y and x decrease
+                {-1, -1}, // Down - left when both y and x decrease
         };
         // check diagonal move
         for (int[] direction : directions) {
@@ -35,6 +35,9 @@ public class Bishop extends ChessPiece {
             while (true) {
                 row += direction[0]; // diagonally move in row
                 col += direction[1]; // diagonally move in column
+
+                // Debugging print
+                System.out.println("Current move: " + row + "," + col);
 
                 // check if the new position in out of bounds
                 if (row < 1 || row > 8 || col < 1 || col > 8) {

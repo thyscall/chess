@@ -47,8 +47,43 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        throw new RuntimeException("Not implemented");
+        // clear board
+        squares = new ChessPiece[8][8];
+
+        // helper to set up piece
+        ChessGame.TeamColor white = ChessGame.TeamColor.WHITE;
+        ChessGame.TeamColor black = ChessGame.TeamColor.BLACK;
+        // pawns
+        for (int col = 1; col <= 8; col++) {
+            addPiece(new ChessPosition(2, col), new Pawn(white));
+            addPiece(new ChessPosition(7, col), new Pawn(black));
+        }
+
+        // white back row
+        ChessPiece[] whitePieces = {
+                new Rook(white), new Knight(white), new Bishop(white), new Queen(white),
+                new King(white), new Bishop(white), new Knight(white), new Rook(white)
+        };
+        // black back row
+        ChessPiece[] blackPieces = {
+                new Rook(black), new Knight(black), new Bishop(black), new Queen(black),
+                new King(black), new Bishop(black), new Knight(black), new Rook(black)
+        };
+
+        // add main pieces (minus pawns) to their correct place on each team's back row
+        for (int col = 1; col <= 8; col++) {
+            addPiece(new ChessPosition(1, col), whitePieces[col - 1]);
+            addPiece(new ChessPosition(8, col), blackPieces[col - 1]);
+        }
     }
+
+    public boolean isValidPosition(ChessPosition position) {
+        return position.getRow() >= 1 && position.getRow() <= 8
+                && position.getColumn() >= 1 && position.getColumn() <= 8;
+    }
+
+
+
 
     @Override
     public boolean equals(Object o) {

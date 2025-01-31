@@ -80,13 +80,13 @@ public class ChessGame {
         board.addPiece(move.getEndPosition(), piece);
         board.addPiece(move.getStartPosition(), null);
 
-        // pawn promotion
-        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-            int promoRow = (piece.getTeamColor() == TeamColor.WHITE) ? 8 : 1;
-            if (move.getEndPosition().getRow() == promoRow && move.getPromotionPiece() != null) {
-                board.addPiece(move.getEndPosition(), new Queen(piece.getTeamColor()));
-            }
-        }
+//        // pawn promotion
+//        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+//            int promoRow = (piece.getTeamColor() == TeamColor.WHITE) ? 8 : 1;
+//            if (move.getEndPosition().getRow() == promoRow && move.getPromotionPiece() != null) {
+//                board.addPiece(move.getEndPosition(), new Queen(piece.getTeamColor()));
+//            }
+//        }
 
         // Change turn
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;

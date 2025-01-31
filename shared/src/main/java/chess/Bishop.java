@@ -1,7 +1,6 @@
 package chess;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
 
 /*
@@ -12,6 +11,7 @@ public class Bishop extends ChessPiece {
 
     //Set the team color and which piece
     public Bishop(ChessGame.TeamColor teamColor) {
+
         super(teamColor, PieceType.BISHOP);
     }
 
@@ -29,31 +29,25 @@ public class Bishop extends ChessPiece {
         };
         // check diagonal move
         for (int[] direction : directions) {
-            int row = myPosition.getRow();
-            int col = myPosition.getColumn();
+            int row = myPosition.getRow(), col = myPosition.getColumn();
 
             while (true) {
                 row += direction[0]; // diagonally move in row
                 col += direction[1]; // diagonally move in column
 
-                // Debugging print
-                System.out.println("Current move: " + row + "," + col);
-
-                // check if the new position in out of bounds
-                if (row < 1 || row > 8 || col < 1 || col > 8) {
-                    break; // stop checking, break the loop
-                }
-
                 ChessPosition newPos = new ChessPosition(row, col); // var to hold value for piece's new position
-                ChessPiece pieceNewPos = board.getPiece(newPos); // set new position
+
+                if (!board.isValidPosition(newPos)) break; // check if position is valid by accessing isValidPosition method in ChessBoard
+
+                ChessPiece piece = board.getPiece(newPos); // set new position
 
                 // check to see if there is a piece in the new piece position
-                if (pieceNewPos == null) {
+                if (piece == null) {
                     // able to move to empty square, add new position to valid moves
                     validMoves.add(new ChessMove(myPosition, newPos, null));
                 } else {
                     // is the piece and an opponent's piece?
-                    if (pieceNewPos.getTeamColor() != this.getTeamColor()) {
+                    if (piece.getTeamColor() != this.getTeamColor()) { // if the piece's team is not equal to the current piece's team
                         validMoves.add(new ChessMove(myPosition, newPos, null)); // capture opponent piece
                     }
                     break; // stop when opponent piece is captured

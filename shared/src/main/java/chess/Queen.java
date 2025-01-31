@@ -3,18 +3,19 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class Rook extends ChessPiece {
-    public Rook(ChessGame.TeamColor teamColor) {
-        super(teamColor, PieceType.ROOK);
+public class Queen extends ChessPiece {
+    public Queen(ChessGame.TeamColor teamColor) {
+        super(teamColor, PieceType.QUEEN);
     }
 
     @Override
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> validMoves = new ArrayList<>();
-        int [][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};  // left, right, down, up
+        int[][] directions = {
+                {-1, 0}, {1, 0}, {0, -1}, {0, 1}, // Rook straight moves
+                {-1, -1}, {1, -1}, {1, 1}, {-1, 1} // Bishop diagonal moves
+        };
 
-        // this is the same for loop that is in Bishop class, could be used in Queen class as well
-        // linear moves
         for (int[] direction : directions) {
             int row = myPosition.getRow(), col = myPosition.getColumn();
 
@@ -38,4 +39,5 @@ public class Rook extends ChessPiece {
         }
         return validMoves;
     }
+
 }

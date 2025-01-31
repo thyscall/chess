@@ -15,7 +15,7 @@ public class Queen extends ChessPiece {
                 {-1, 0}, {1, 0}, {0, -1}, {0, 1}, // Rook straight moves
                 {-1, -1}, {1, -1}, {1, 1}, {-1, 1} // Bishop diagonal moves
         };
-
+        // same for loop as Bishop and Rook
         for (int[] direction : directions) {
             int row = myPosition.getRow(), col = myPosition.getColumn();
 

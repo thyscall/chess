@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -9,16 +10,21 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessGame {
+    private ChessBoard board;
+    private TeamColor currentTurn;
 
+    // Constructor that initializes a new game with empty board
     public ChessGame() {
-
+        this.currentTurn = TeamColor.WHITE; // white always starts
+        this.board = new ChessBoard(); // new chess board
+        this.board.resetBoard(); // wipe the board
     }
 
     /**
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
-        throw new RuntimeException("Not implemented");
+        return currentTurn;
     }
 
     /**
@@ -27,7 +33,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
-        throw new RuntimeException("Not implemented");
+        this.currentTurn = team;
     }
 
     /**
@@ -46,7 +52,12 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition); // piece position at the start of the game
+        if (piece == null || piece.getTeamColor() != currentTurn) { // if there is no piece or it is the opponents piece, return null
+            return null;
+        }
+
+        return piece.pieceMoves(board, startPosition);
     }
 
     /**
@@ -56,7 +67,29 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(move.getStartPosition()); // get piece at its starting position
+        if (piece == null || piece.getTeamColor() != currentTurn) { // is there a piece? or is the piece not yours?
+            throw new InvalidMoveException("Invalid move: No piece or wrong turn."); // if so, move is invalid
+        }
+        Collection<ChessMove> validMoves = piece.pieceMoves(board, move.getStartPosition());
+        if (!validMoves.contains(move)) {
+            throw new InvalidMoveException("Invalid move: Move not allowed.");
+        }
+
+        // move piece
+        board.addPiece(move.getEndPosition(), piece);
+        board.addPiece(move.getStartPosition(), null);
+
+        // pawn promotion
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
+            int promoRow = (piece.getTeamColor() == TeamColor.WHITE) ? 8 : 1;
+            if (move.getEndPosition().getRow() == promoRow && move.getPromotionPiece() != null) {
+                board.addPiece(move.getEndPosition(), new Queen(piece.getTeamColor()));
+            }
+        }
+
+        // Change turn
+        currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }
 
     /**
@@ -66,7 +99,8 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        ChessPosition kingPos = findKing(teamColor); // find the team's king
+        return kingPos == null && isUnderAttack(kingPos, teamColor); // can it be captured? isUnderAttack helper function
     }
 
     /**
@@ -76,7 +110,24 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (!isInCheck(teamColor)) { // cannot be in check mate if king is not in check
+            return false;
+        }
+
+        // if no valid moves, king is in check mate, mate!
+        for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
+            ChessPiece piece = board.getPiece(position);
+            if (piece != null){
+                for (ChessMove move : piece.pieceMoves(board, position)) {
+                    ChessBoard boardCopy = new ChessBoard();
+                    boardCopy.movePiece(move);
+                    if (!isUnderAttack(findKing(teamColor, boardCopy), teamColor)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -87,7 +138,18 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (isInCheck(teamColor)) { // if king in check, stalemate is false
+            return false;
+        }
+        // if no valid moves exist, it's a stalemate
+        // if any piece has a valid move, stalemate is false
+        for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
+            ChessPiece piece = board.getPiece(position);
+            if (piece != null && !piece.pieceMoves(board, position).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -96,7 +158,7 @@ public class ChessGame {
      * @param board the new board to use
      */
     public void setBoard(ChessBoard board) {
-        throw new RuntimeException("Not implemented");
+        this.board = board;
     }
 
     /**
@@ -105,6 +167,38 @@ public class ChessGame {
      * @return the chessboard
      */
     public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+        return board;
+    }
+
+    // loop through all squares to find the King;s position for a team
+    private Collection<ChessPosition> getAllPiecePositions(TeamColor teamColor) {
+        Collection<ChessPosition> positions = new ArrayList<>();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
+                if (piece != null && piece.getTeamColor() == teamColor) {
+                    positions.add(new ChessPosition(row, col)); // Store position
+                }
+            }
+        }
+        return positions;
+    }
+
+    private boolean isUnderAttack(ChessPosition position, TeamColor teamColor) {
+        TeamColor opponent = (teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
+
+        for (ChessPosition opponentPosition : board.getAllPiecePositions(opponent)) {
+            ChessPiece piece = board.getPiece(opponentPosition);
+            if (piece != null) {
+                for (ChessMove move : piece.pieceMoves(board, opponentPosition)) {
+                    if (move.getEndPosition().equals(position)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
+
+

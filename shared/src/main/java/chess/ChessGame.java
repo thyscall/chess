@@ -77,8 +77,7 @@ public class ChessGame {
         }
 
         // move piece
-        board.addPiece(move.getEndPosition(), piece);
-        board.addPiece(move.getStartPosition(), null);
+        board.movePiece(move); // makeMove from ChessBoard class
 
 //        // pawn promotion
 //        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
@@ -117,11 +116,12 @@ public class ChessGame {
         // if no valid moves, king is in check mate, mate!
         for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
             ChessPiece piece = board.getPiece(position);
-            if (piece != null){
+            if (piece != null) {
                 for (ChessMove move : piece.pieceMoves(board, position)) {
-                    ChessBoard boardCopy = new ChessBoard();
-                    boardCopy.movePiece(move);
-                    if (!isUnderAttack(findKing(teamColor, boardCopy), teamColor)) {
+                    ChessBoard boardCopy = new ChessBoard(); // do I need to pass in board here?
+                    boardCopy.movePiece(move); // copy the board as is to a new board
+
+                    if (!isUnderAttack(findKing(teamColor), teamColor)) {
                         return false;
                     }
                 }
@@ -129,6 +129,17 @@ public class ChessGame {
         }
         return true;
     }
+
+    private ChessPosition findKing(TeamColor teamColor) {
+       for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
+           ChessPiece piece = board.getPiece(position);
+           if (piece != null && piece.getPieceType() == ChessPiece.PieceType.KING) {
+               return position;
+           }
+        }
+        return null; // King is not found, means game is invalid
+    }
+
 
     /**
      * Determines if the given team is in stalemate, which here is defined as having
@@ -168,20 +179,6 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return board;
-    }
-
-    // loop through all squares to find the King;s position for a team
-    private Collection<ChessPosition> getAllPiecePositions(TeamColor teamColor) {
-        Collection<ChessPosition> positions = new ArrayList<>();
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPiece piece = board.getPiece(new ChessPosition(row, col));
-                if (piece != null && piece.getTeamColor() == teamColor) {
-                    positions.add(new ChessPosition(row, col)); // Store position
-                }
-            }
-        }
-        return positions;
     }
 
     private boolean isUnderAttack(ChessPosition position, TeamColor teamColor) {

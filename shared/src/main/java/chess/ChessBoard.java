@@ -1,7 +1,6 @@
 package chess;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -16,9 +15,8 @@ import java.util.Objects;
 
 public class ChessBoard {
     private ChessPiece[][] squares =  new ChessPiece[8][8];
-    public ChessBoard() {
-        
-    }
+
+    public ChessBoard() {}
 
     /**
      * Adds a chess piece to the chessboard
@@ -42,6 +40,20 @@ public class ChessBoard {
         return squares[position.getRow() - 1][position.getColumn() - 1];
     }
 
+    // loop through all squares to find the King;s position for a team
+    Collection<ChessPosition> getAllPiecePositions(ChessGame.TeamColor teamColor) {
+        Collection<ChessPosition> positions = new HashSet<>();
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPiece piece = getPiece(new ChessPosition(row, col));
+                if (piece != null && piece.getTeamColor() == teamColor) {
+                    positions.add(new ChessPosition(row, col)); // Store position
+                }
+            }
+        }
+        return positions;
+    }
+
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
@@ -50,30 +62,26 @@ public class ChessBoard {
         // clear board
         squares = new ChessPiece[8][8];
 
-        // helper to set up piece
-        ChessGame.TeamColor white = ChessGame.TeamColor.WHITE;
-        ChessGame.TeamColor black = ChessGame.TeamColor.BLACK;
-        // pawns
-        for (int col = 1; col <= 8; col++) {
-            addPiece(new ChessPosition(2, col), new Pawn(white));
-            addPiece(new ChessPosition(7, col), new Pawn(black));
+        for (int i = 1; i <= 8; i++) {
+            addPiece(new ChessPosition(2, i), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
+            addPiece(new ChessPosition(7, i), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
         }
 
-        // white back row
-        ChessPiece[] whitePieces = {
-                new Rook(white), new Knight(white), new Bishop(white), new Queen(white),
-                new King(white), new Bishop(white), new Knight(white), new Rook(white)
-        };
-        // black back row
-        ChessPiece[] blackPieces = {
-                new Rook(black), new Knight(black), new Bishop(black), new Queen(black),
-                new King(black), new Bishop(black), new Knight(black), new Rook(black)
+        // Place Major Pieces
+        ChessPiece.PieceType[] majorPieces = {
+                ChessPiece.PieceType.ROOK,
+                ChessPiece.PieceType.KNIGHT,
+                ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.QUEEN,
+                ChessPiece.PieceType.KING,
+                ChessPiece.PieceType.BISHOP,
+                ChessPiece.PieceType.KNIGHT,
+                ChessPiece.PieceType.ROOK
         };
 
-        // add main pieces (minus pawns) to their correct place on each team's back row
-        for (int col = 1; col <= 8; col++) {
-            addPiece(new ChessPosition(1, col), whitePieces[col - 1]);
-            addPiece(new ChessPosition(8, col), blackPieces[col - 1]);
+        for (int i = 0; i < 8; i++) {
+            addPiece(new ChessPosition(1, i + 1), new ChessPiece(ChessGame.TeamColor.WHITE, majorPieces[i]));
+            addPiece(new ChessPosition(8, i + 1), new ChessPiece(ChessGame.TeamColor.BLACK, majorPieces[i]));
         }
     }
 
@@ -83,15 +91,14 @@ public class ChessBoard {
     }
 
 
-
-
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         ChessBoard that = (ChessBoard) o;
-        return Objects.deepEquals(squares, that.squares);
+        return Arrays.deepEquals(squares, that.squares);
     }
 
     @Override
@@ -104,5 +111,8 @@ public class ChessBoard {
         return "ChessBoard{" +
                 "squares=" + Arrays.toString(squares) +
                 '}';
+    }
+
+    public void movePiece(ChessMove move) {
     }
 }

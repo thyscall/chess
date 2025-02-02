@@ -1,6 +1,5 @@
 package chess;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -118,9 +117,8 @@ public class ChessGame {
             ChessPiece piece = board.getPiece(position);
             if (piece != null) {
                 for (ChessMove move : piece.pieceMoves(board, position)) {
-                    ChessBoard boardCopy = new ChessBoard(); // do I need to pass in board here?
-                    boardCopy.movePiece(move); // copy the board as is to a new board
-
+                    ChessBoard boardCopy = new ChessBoard(board); // copy of board's actual state
+                    boardCopy.movePiece(move); // simulated move, not actual
                     if (!isUnderAttack(findKing(teamColor), teamColor)) {
                         return false;
                     }
@@ -137,7 +135,7 @@ public class ChessGame {
                return position;
            }
         }
-        return null; // King is not found, means game is invalid
+        throw new IllegalStateException("King was not found for team" + teamColor); // King is not found, means game is invalid
     }
 
 

@@ -18,6 +18,16 @@ public class ChessBoard {
 
     public ChessBoard() {}
 
+    public ChessBoard(ChessBoard copy) {
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                if (copy.squares[row][col] != null) {
+                    // Copy the chess piece (shallow copy of the piece, deep copy of board state)
+                    this.squares[row][col] = new ChessPiece(copy.squares[row][col].getTeamColor(), copy.squares[row][col].getPieceType());
+                }
+            }
+        }
+    }
     /**
      * Adds a chess piece to the chessboard
      *
@@ -38,6 +48,12 @@ public class ChessBoard {
     public ChessPiece getPiece(ChessPosition position) {
 
         return squares[position.getRow() - 1][position.getColumn() - 1];
+    }
+
+    public void movePiece(ChessMove move) {
+        ChessPiece piece = getPiece(move.getStartPosition());
+        addPiece(move.getEndPosition(), piece);
+        addPiece(move.getStartPosition(), null);
     }
 
     // loop through all squares to find the King;s position for a team
@@ -111,9 +127,5 @@ public class ChessBoard {
         return "ChessBoard{" +
                 "squares=" + Arrays.toString(squares) +
                 '}';
-    }
-
-    public void movePiece(ChessMove move) {
-        // USED IN ChessGame, but does not do anything
     }
 }

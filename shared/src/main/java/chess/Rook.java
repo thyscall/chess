@@ -24,12 +24,12 @@ public class Rook extends ChessPiece {
                 ChessPosition newPosition = new ChessPosition(row, col);
 
                 if (!board.isValidPosition(newPosition)) break;
-                ChessPiece piece = board.getPiece(newPosition);
+                ChessPiece targetPiece = board.getPiece(newPosition);
 
-                if (piece == null) {
+                if (targetPiece == null) {
                     validMoves.add(new ChessMove(myPosition, newPosition, null));
                 } else {
-                    if (piece.getTeamColor() != this.getTeamColor()) {
+                    if (targetPiece.getTeamColor() != getTeamColor()) {
                         validMoves.add(new ChessMove(myPosition, newPosition,null));
                     }
                     break;

@@ -67,8 +67,8 @@ public class ChessBoard {
             addPiece(new ChessPosition(7, i), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
         }
 
-        // Place Major Pieces
-        ChessPiece.PieceType[] majorPieces = {
+        // MAIN PIECES
+        ChessPiece.PieceType[] mainPieces = {
                 ChessPiece.PieceType.ROOK,
                 ChessPiece.PieceType.KNIGHT,
                 ChessPiece.PieceType.BISHOP,
@@ -80,8 +80,8 @@ public class ChessBoard {
         };
 
         for (int i = 0; i < 8; i++) {
-            addPiece(new ChessPosition(1, i + 1), new ChessPiece(ChessGame.TeamColor.WHITE, majorPieces[i]));
-            addPiece(new ChessPosition(8, i + 1), new ChessPiece(ChessGame.TeamColor.BLACK, majorPieces[i]));
+            addPiece(new ChessPosition(1, i + 1), new ChessPiece(ChessGame.TeamColor.WHITE, mainPieces[i]));
+            addPiece(new ChessPosition(8, i + 1), new ChessPiece(ChessGame.TeamColor.BLACK, mainPieces[i]));
         }
     }
 
@@ -114,5 +114,6 @@ public class ChessBoard {
     }
 
     public void movePiece(ChessMove move) {
+        // USED IN ChessGame, but does not do anything
     }
 }

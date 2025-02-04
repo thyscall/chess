@@ -76,12 +76,15 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         switch(pieceType) {
+            case PAWN -> {
+                return new PawnMoveCalculator().pieceMoves(board, myPosition); // return Pawn moves into an array
+            }
             case ROOK -> {
                 return new RookMoveCalculator().pieceMoves(board, myPosition); // return Rook moves into an array
             }
-//            case KNIGHT -> { // NOT IMPLEMENTED
-//                return new KnightMoveCalculator().pieceMoves(board, myPosition);
-//            }
+            case KNIGHT -> { // NOT IMPLEMENTED
+                return new KnightMoveCalculator().pieceMoves(board, myPosition);
+            }
             case BISHOP -> {
                 return new  BishopMoveCalculator().pieceMoves(board, myPosition); // return instances method return statement -> a collection of chess moves
             }

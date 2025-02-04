@@ -3,21 +3,9 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/*
-* Bishop piece & moves
- */
-// PieceMoveCalculator from video on Git
-public class Bishop extends ChessPiece {
-
-    //Set the team color and which piece
-    public Bishop(ChessGame.TeamColor teamColor) {
-
-        super(teamColor, PieceType.BISHOP);
-    }
-
-
-    @Override
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+// implement the PieceMovesCalculator
+public class BishopMoveCalculator implements PieceMoveCalculator {
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) { // implementation is done in the subclasses
         Collection<ChessMove> validMoves = new ArrayList<>();
 
         // where can a Bishop move? Diagonal
@@ -37,7 +25,8 @@ public class Bishop extends ChessPiece {
 
                 ChessPosition newPos = new ChessPosition(row, col); // var to hold value for piece's new position
 
-                if (!board.isValidPosition(newPos)) break; // check if position is valid by accessing isValidPosition method in ChessBoard
+                if (!board.isValidPosition(newPos))
+                    break; // check if position is valid by accessing isValidPosition method in ChessBoard
 
                 ChessPiece piece = board.getPiece(newPos); // set new position
 
@@ -47,7 +36,8 @@ public class Bishop extends ChessPiece {
                     validMoves.add(new ChessMove(myPosition, newPos, null));
                 } else {
                     // is the piece and an opponent's piece?
-                    if (piece.getTeamColor() != this.getTeamColor()) { // if the piece's team is not equal to the current piece's team
+                                            // GET THE PIECE AT THE POSITION
+                    if (piece.getTeamColor() != board.getPiece(myPosition).getTeamColor()) { // if the piece's team is not equal to the current piece's team
                         validMoves.add(new ChessMove(myPosition, newPos, null)); // capture opponent piece
                     }
                     break; // stop when opponent piece is captured

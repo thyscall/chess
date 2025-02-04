@@ -75,8 +75,18 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-
-        return new ArrayList<>();
+        switch(pieceType) {
+            case ROOK -> {
+                return new RookMoveCalculator().pieceMoves(board, myPosition); // return Rook moves into an array
+            }
+            case BISHOP -> {
+                return new  BishopMoveCalculator().pieceMoves(board, myPosition); // return instances method return statement -> a collection of chess moves
+            }
+            // switch case for all pieces
+            default -> {
+                return new ArrayList<>();
+            }
+        }
     }
 
 

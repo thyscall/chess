@@ -79,8 +79,14 @@ public class ChessPiece {
             case ROOK -> {
                 return new RookMoveCalculator().pieceMoves(board, myPosition); // return Rook moves into an array
             }
+//            case KNIGHT -> { // NOT IMPLEMENTED
+//                return new KnightMoveCalculator().pieceMoves(board, myPosition);
+//            }
             case BISHOP -> {
                 return new  BishopMoveCalculator().pieceMoves(board, myPosition); // return instances method return statement -> a collection of chess moves
+            }
+            case QUEEN -> {
+                return new QueenMoveCalculator().pieceMoves(board, myPosition);
             }
             // switch case for all pieces
             default -> {

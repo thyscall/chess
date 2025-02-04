@@ -14,8 +14,15 @@ public class KnightMoveCalculator implements PieceMoveCalculator {
         };
 
         for (int[] dir : directions) {
+
             ChessPosition newPos = new ChessPosition(myPosition.getRow() + dir[0], myPosition.getColumn() + dir[1]);
-            if (board.isValidPosition(newPos) && (board.getPiece(newPos) == null || board.getPiece(newPos).getTeamColor() != board.getPiece(myPosition).getTeamColor())) {
+
+            if (!board.isValidPosition(newPos)) continue; // Skip invalid positions
+
+            ChessPiece targetPiece = board.getPiece(newPos);
+
+            // If the square is empty or contains an enemy piece, it's a valid move
+            if (targetPiece == null || targetPiece.getTeamColor() != board.getPiece(myPosition).getTeamColor()) {
                 validMoves.add(new ChessMove(myPosition, newPos, null));
             }
         }

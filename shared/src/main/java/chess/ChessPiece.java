@@ -88,6 +88,9 @@ public class ChessPiece {
             case QUEEN -> {
                 return new QueenMoveCalculator().pieceMoves(board, myPosition);
             }
+            case KING -> {
+                return new KingMoveCalculator().pieceMoves(board, myPosition);
+            }
             // switch case for all pieces
             default -> {
                 return new ArrayList<>();

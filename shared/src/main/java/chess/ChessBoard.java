@@ -22,7 +22,7 @@ public class ChessBoard {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (copy.squares[row][col] != null) {
-                    // Copy the chess piece (shallow copy of the piece, deep copy of board state)
+                    // copy of chess board, pieces, and their positions
                     this.squares[row][col] = new ChessPiece(copy.squares[row][col].getTeamColor(), copy.squares[row][col].getPieceType());
                 }
             }
@@ -56,7 +56,7 @@ public class ChessBoard {
         addPiece(move.getStartPosition(), null);
     }
 
-    // loop through all squares to find the King;s position for a team
+    // loop through all squares to find a team's piece positions
     Collection<ChessPosition> getAllPiecePositions(ChessGame.TeamColor teamColor) {
         Collection<ChessPosition> positions = new HashSet<>();
         for (int row = 1; row <= 8; row++) {

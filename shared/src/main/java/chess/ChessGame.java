@@ -23,6 +23,7 @@ public class ChessGame {
      * @return Which team's turn it is
      */
     public TeamColor getTeamTurn() {
+
         return currentTurn;
     }
 
@@ -32,6 +33,7 @@ public class ChessGame {
      * @param team the team whose turn it is
      */
     public void setTeamTurn(TeamColor team) {
+
         this.currentTurn = team;
     }
 
@@ -71,20 +73,12 @@ public class ChessGame {
             throw new InvalidMoveException("Invalid move: No piece or wrong turn."); // if so, move is invalid
         }
         Collection<ChessMove> validMoves = piece.pieceMoves(board, move.getStartPosition());
-        if (!validMoves.contains(move)) {
+        if (!validMoves.contains(move)) { // if it is not a valid move, throw error
             throw new InvalidMoveException("Invalid move: Move not allowed.");
         }
 
         // move piece
         board.movePiece(move); // makeMove from ChessBoard class
-
-//        // pawn promotion
-//        if (piece.getPieceType() == ChessPiece.PieceType.PAWN) {
-//            int promoRow = (piece.getTeamColor() == TeamColor.WHITE) ? 8 : 1;
-//            if (move.getEndPosition().getRow() == promoRow && move.getPromotionPiece() != null) {
-//                board.addPiece(move.getEndPosition(), new Queen(piece.getTeamColor()));
-//            }
-//        }
 
         // Change turn
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
@@ -111,7 +105,6 @@ public class ChessGame {
         if (!isInCheck(teamColor)) { // cannot be in check mate if king is not in check
             return false;
         }
-
         // if no valid moves, king is in check mate, mate!
         for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
             ChessPiece piece = board.getPiece(position);

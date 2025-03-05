@@ -10,7 +10,7 @@ public class PawnMoveCalculator implements PieceMoveCalculator {
 
         ChessPiece piece = board.getPiece(myPosition);
 
-        if (piece == null || piece.getPieceType() != ChessPiece.PieceType.PAWN) {
+        if (piece == null || piece.getPieceType() != ChessPiece.PieceType.PAWN) { // if there is no piece (null) or the piece type is not a pawn, return empty valid moves array
             return validMoves; // this will be an empty array because the piece is null, or it is not a pawn
         }
 

@@ -59,8 +59,10 @@ public class ChessBoard {
     // loop through all squares to find a team's piece positions
     Collection<ChessPosition> getAllPiecePositions(ChessGame.TeamColor teamColor) {
         Collection<ChessPosition> positions = new HashSet<>();
+        // loop through all positions on the board
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
+                // look for pieces on the board
                 ChessPiece piece = getPiece(new ChessPosition(row, col));
                 if (piece != null && piece.getTeamColor() == teamColor) {
                     positions.add(new ChessPosition(row, col)); // Store position
@@ -75,7 +77,7 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        // clear board
+        //  create a new, blank 8x8 array of squares
         squares = new ChessPiece[8][8];
 
         for (int i = 1; i <= 8; i++) {

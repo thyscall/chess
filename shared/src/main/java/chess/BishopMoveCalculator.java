@@ -36,7 +36,7 @@ public class BishopMoveCalculator implements PieceMoveCalculator {
                     validMoves.add(new ChessMove(myPosition, newPos, null));
                 } else {
                     // is the piece and an opponent's piece?
-                                            // GET THE PIECE AT THE POSITION
+                    // GET THE PIECE AT THE POSITION
                     if (piece.getTeamColor() != board.getPiece(myPosition).getTeamColor()) { // if the piece's team is not equal to the current piece's team
                         validMoves.add(new ChessMove(myPosition, newPos, null)); // capture opponent piece
                     }

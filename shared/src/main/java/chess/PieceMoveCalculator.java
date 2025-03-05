@@ -7,5 +7,4 @@ import java.util.Collection;
 public interface PieceMoveCalculator {
     // method that is going to be called for all of its subclasses
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition);
-
 }

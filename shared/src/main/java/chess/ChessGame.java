@@ -76,7 +76,14 @@ public class ChessGame {
         if (!validMoves.contains(move)) { // if it is not a valid move, throw error
             throw new InvalidMoveException("Invalid move: Move not allowed.");
         }
+        ChessBoard tempBoard = new ChessBoard(board);
+        tempBoard.movePiece(move);
 
+        ChessPosition kingPosition = findKing(currentTurn, tempBoard);
+
+        if (isUnderAttack(kingPosition, currentTurn, tempBoard)){
+            throw new InvalidMoveException("Invalid: King is still in check");
+        }
         // move piece
         board.movePiece(move); // makeMove from ChessBoard class
 
@@ -91,8 +98,8 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition kingPos = findKing(teamColor); // find the team's king
-        return kingPos == null && isUnderAttack(kingPos, teamColor); // can it be captured? isUnderAttack helper function
+        ChessPosition kingPos = findKing(teamColor, board); // find the team's king
+        return kingPos == null && isUnderAttack(kingPos, teamColor, board); // can it be captured? isUnderAttack helper function
     }
 
     /**
@@ -112,7 +119,7 @@ public class ChessGame {
                 for (ChessMove move : piece.pieceMoves(board, position)) {
                     ChessBoard boardCopy = new ChessBoard(board); // copy of board's actual state
                     boardCopy.movePiece(move); // simulated move, not actual
-                    if (!isUnderAttack(findKing(teamColor), teamColor)) {
+                    if (!isUnderAttack(findKing(teamColor, board), teamColor, board)) {
                         return false;
                     }
                 }
@@ -121,7 +128,7 @@ public class ChessGame {
         return true;
     }
 
-    private ChessPosition findKing(TeamColor teamColor) {
+    private ChessPosition findKing(TeamColor teamColor, ChessBoard board) {
        for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
            ChessPiece piece = board.getPiece(position);
            if (piece != null && piece.getPieceType() == ChessPiece.PieceType.KING) {
@@ -172,7 +179,7 @@ public class ChessGame {
         return board;
     }
 
-    private boolean isUnderAttack(ChessPosition position, TeamColor teamColor) {
+    private boolean isUnderAttack(ChessPosition position, TeamColor teamColor, ChessBoard tempBoard) {
         TeamColor opponent = (teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
 
         for (ChessPosition opponentPosition : board.getAllPiecePositions(opponent)) {

@@ -69,14 +69,36 @@ public class ChessGame {
 
                 ChessPosition kingPosition = findKing(piece.getTeamColor(), tempBoard);
 
-                if (!isUnderAttack(kingPosition, piece.getTeamColor(), tempBoard)) {
+                if (kingPosition != null && !isUnderAttack(kingPosition, piece.getTeamColor(), tempBoard)) {
                     legalMoves.add(move);
                 }
             }
         } else {
-            legalMoves.addAll(possibleMoves); // if king is NOT in check, return all possible moves
+            ChessPosition kingPosition = findKing(piece.getTeamColor(),board);
+            if (isPinned(startPosition, kingPosition, board)) {
+                for (ChessMove move : possibleMoves) {
+                    ChessBoard tempBoard = new ChessBoard(board);
+                    tempBoard.movePiece(move);
+
+                    if (!isUnderAttack(kingPosition, piece.getTeamColor(), tempBoard)) {
+                        legalMoves.add(move);
+                    }
+                }
+            } else {
+                legalMoves.addAll(possibleMoves); // if king is NOT in check, return all possible moves
+            }
         }
         return legalMoves;
+    }
+
+    private boolean isPinned(ChessPosition piecePosition, ChessPosition kingPosition, ChessBoard board) {
+        TeamColor teamColor = board.getPiece(piecePosition).getTeamColor();
+        TeamColor opponent = (teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
+
+        ChessBoard tempBoard = new ChessBoard(board);
+        tempBoard.addPiece(piecePosition, null);
+
+        return isUnderAttack(kingPosition, teamColor, tempBoard);
     }
 
     /**

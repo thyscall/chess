@@ -69,6 +69,7 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition()); // get piece at its starting position
+
         if (piece == null || piece.getTeamColor() != currentTurn) { // is there a piece? or is the piece not yours?
             throw new InvalidMoveException("Invalid move: No piece or wrong turn."); // if so, move is invalid
         }
@@ -76,7 +77,7 @@ public class ChessGame {
         if (!validMoves.contains(move)) { // if it is not a valid move, throw error
             throw new InvalidMoveException("Invalid move: Move not allowed.");
         }
-        ChessBoard tempBoard = new ChessBoard(board);
+        ChessBoard tempBoard = new ChessBoard(board); // temporary board
         tempBoard.movePiece(move);
 
         ChessPosition kingPosition = findKing(currentTurn, tempBoard);
@@ -84,9 +85,22 @@ public class ChessGame {
         if (isUnderAttack(kingPosition, currentTurn, tempBoard)){
             throw new InvalidMoveException("Invalid: King is still in check");
         }
-        // move piece
-        board.movePiece(move); // makeMove from ChessBoard class
 
+        if (piece.getPieceType() == ChessPiece.PieceType.PAWN){
+            if ((currentTurn == TeamColor.WHITE && move.getEndPosition().getRow() == 8) ||
+                    (currentTurn == TeamColor.BLACK && move.getEndPosition().getRow() == 1)) {
+                if (move.getPromotionPiece() != null) {
+                    board.addPiece(move.getEndPosition(), new ChessPiece(currentTurn, move.getPromotionPiece()));
+                } else {
+                    throw new InvalidMoveException("Invalid: Pawn promotion without piece");
+                }
+                board.addPiece(move.getStartPosition(), null); // remove pawn
+            } else {
+                board.movePiece(move); // normal pawn move
+            }
+        } else {
+            board.movePiece(move);
+        }
         // Change turn
         currentTurn = (currentTurn == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
     }

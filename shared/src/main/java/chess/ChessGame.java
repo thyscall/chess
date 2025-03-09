@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -54,11 +55,28 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition); // piece position at the start of the game
-        if (piece == null || piece.getTeamColor() != currentTurn) { // if there is no piece or it is the opponents piece, return null
-            return null;
-        }
 
-        return piece.pieceMoves(board, startPosition);
+        if (piece == null) {
+            return new ArrayList<>(); // no piece at position
+        }
+        Collection<ChessMove> possibleMoves = piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> legalMoves = new ArrayList<>();
+
+        if (isInCheck(piece.getTeamColor())) {
+            for (ChessMove move : possibleMoves) {
+                ChessBoard tempBoard = new ChessBoard(board); // make a copy of the board
+                tempBoard.movePiece(move);
+
+                ChessPosition kingPosition = findKing(piece.getTeamColor(), tempBoard);
+
+                if (!isUnderAttack(kingPosition, piece.getTeamColor(), tempBoard)) {
+                    legalMoves.add(move);
+                }
+            }
+        } else {
+            legalMoves.addAll(possibleMoves); // if king is NOT in check, return all possible moves
+        }
+        return legalMoves;
     }
 
     /**
@@ -113,7 +131,10 @@ public class ChessGame {
      */
     public boolean isInCheck(TeamColor teamColor) {
         ChessPosition kingPos = findKing(teamColor, board); // find the team's king
-        return kingPos == null && isUnderAttack(kingPos, teamColor, board); // can it be captured? isUnderAttack helper function
+        if (kingPos == null) {
+            return true;
+        }
+        return isUnderAttack(kingPos, teamColor, board);
     }
 
     /**
@@ -196,10 +217,10 @@ public class ChessGame {
     private boolean isUnderAttack(ChessPosition position, TeamColor teamColor, ChessBoard tempBoard) {
         TeamColor opponent = (teamColor == TeamColor.WHITE) ? TeamColor.BLACK : TeamColor.WHITE;
 
-        for (ChessPosition opponentPosition : board.getAllPiecePositions(opponent)) {
-            ChessPiece piece = board.getPiece(opponentPosition);
+        for (ChessPosition opponentPosition : tempBoard.getAllPiecePositions(opponent)) {
+            ChessPiece piece = tempBoard.getPiece(opponentPosition);
             if (piece != null) {
-                for (ChessMove move : piece.pieceMoves(board, opponentPosition)) {
+                for (ChessMove move : piece.pieceMoves(tempBoard, opponentPosition)) {
                     if (move.getEndPosition().equals(position)) {
                         return true;
                     }

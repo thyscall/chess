@@ -185,9 +185,12 @@ public class ChessGame {
             ChessPiece piece = board.getPiece(position);
             if (piece != null) {
                 for (ChessMove move : piece.pieceMoves(board, position)) {
-                    ChessBoard boardCopy = new ChessBoard(board); // copy of board's actual state
-                    boardCopy.movePiece(move); // simulated move, not actual
-                    if (!isUnderAttack(findKing(teamColor, board), teamColor, board)) {
+                    ChessBoard tempBoard = new ChessBoard(board); // copy of board's actual state
+                    tempBoard.movePiece(move); // simulated move, not actual
+
+                    ChessPosition kingPosition = findKing(teamColor, tempBoard);
+
+                    if (!isUnderAttack(kingPosition, teamColor, tempBoard)) {
                         return false;
                     }
                 }
@@ -221,8 +224,7 @@ public class ChessGame {
         // if no valid moves exist, it's a stalemate
         // if any piece has a valid move, stalemate is false
         for (ChessPosition position : board.getAllPiecePositions(teamColor)) {
-            ChessPiece piece = board.getPiece(position);
-            if (piece != null && !piece.pieceMoves(board, position).isEmpty()) {
+            if (!validMoves(position).isEmpty()) {
                 return false;
             }
         }

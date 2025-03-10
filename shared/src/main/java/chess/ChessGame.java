@@ -75,7 +75,18 @@ public class ChessGame {
             }
         } else {
             ChessPosition kingPosition = findKing(piece.getTeamColor(),board);
-            if (isPinned(startPosition, kingPosition, board)) {
+            if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                for (ChessMove move : possibleMoves) {
+                    ChessBoard tempBoard = new ChessBoard(board);
+                    tempBoard.movePiece(move);
+
+                    ChessPosition newKingPos = move.getEndPosition();
+
+                    if (!isUnderAttack(newKingPos, piece.getTeamColor(), tempBoard)) {
+                        legalMoves.add(move);
+                    }
+                }
+            } else if (isPinned(startPosition, kingPosition, board)) {
                 for (ChessMove move : possibleMoves) {
                     ChessBoard tempBoard = new ChessBoard(board);
                     tempBoard.movePiece(move);

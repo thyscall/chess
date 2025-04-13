@@ -82,7 +82,7 @@ public class ChessPiece {
             case ROOK -> {
                 return new RookMoveCalculator().pieceMoves(board, myPosition); // return Rook moves into an array
             }
-            case KNIGHT -> { // NOT IMPLEMENTED
+            case KNIGHT -> {
                 return new KnightMoveCalculator().pieceMoves(board, myPosition);
             }
             case BISHOP -> {

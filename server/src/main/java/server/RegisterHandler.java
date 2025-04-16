@@ -24,20 +24,20 @@ public class RegisterHandler implements Route {
             // 3. return as JSON
             res.status(200);
             return new Gson().toJson(result);
-        } catch (DataAccessException e) {
+        } catch (DataAccessException error) {
 
             // Username taken or invalid input
-            if (e.getMessage().contains("already taken")) {
+            if (error.getMessage().contains("already taken")) {
                 // already taken
                 res.status(403);
             } else {
                 // bad request
                 res.status(400);
             }
-            return new Gson().toJson(new ErrorMessage(e.getMessage()));
-        } catch (Exception e) {
+            return new Gson().toJson(new ErrorMessage(error.getMessage()));
+        } catch (Exception error) {
             res.status(500);
-            return new Gson().toJson(new ErrorMessage("Error: " + e.getMessage()));
+            return new Gson().toJson(new ErrorMessage("Error: " + error.getMessage()));
         }
     }
 

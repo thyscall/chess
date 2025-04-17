@@ -4,9 +4,10 @@ import model.GameData;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 public class GameDAO {
-    private final HashMap<Integer, GameData> games = new HashMap<>();
+    private final Map<Integer, GameData> games = new HashMap<>();
     private int gameID = 1;
 
     // new game and give it an ID

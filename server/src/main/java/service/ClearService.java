@@ -10,7 +10,7 @@ public class ClearService {
     private final AuthDAO authDAO = new AuthDAO();
     private final GameDAO gameDAO = new GameDAO();
 
-    public void clearAll() throws DataAccessException {
+    public void clear() throws DataAccessException {
         userDAO.clear();
         authDAO.clear();
         gameDAO.clear();

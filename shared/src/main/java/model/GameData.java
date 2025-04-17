@@ -34,8 +34,8 @@ public class GameData {
     public String getWhiteUsername() {
         return whiteUsername;
     }
-    //SETTERS
 
+    //SETTERS
     public void setGame(ChessGame game) {
         this.game = game;
     }

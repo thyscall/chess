@@ -1,6 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.CreateGameRequest;
 import model.CreateGameResult;
@@ -10,7 +11,7 @@ import spark.Response;
 import spark.Route;
 
 public class CreateGameHandler implements Route {
-    public final CreateGameService createGameService = new CreateGameService();
+    public final CreateGameService createGameService = new CreateGameService(DataAccess.authDAO, DataAccess.gameDAO);
 
     @Override
     public Object handle(Request req, Response res) throws Exception {

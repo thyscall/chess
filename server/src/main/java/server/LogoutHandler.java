@@ -31,5 +31,6 @@ public class LogoutHandler implements Route {
             return new Gson().toJson(new ErrorMessage("Error: " + error.getMessage()));
         }
     }
+
     public record ErrorMessage(String message) {}
 }

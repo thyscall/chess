@@ -1,6 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.JoinGameRequest;
 import service.JoinGameService;
@@ -9,7 +10,7 @@ import spark.Response;
 import spark.Route;
 
 public class JoinGameHandler implements Route {
-    public final JoinGameService service = new JoinGameService();
+    public final JoinGameService service = new JoinGameService(DataAccess.authDAO, DataAccess.gameDAO);
 
     @Override
     public Object handle(Request req, Response res) {

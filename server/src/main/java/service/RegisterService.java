@@ -2,13 +2,11 @@ package service;
 
 import dataaccess.*;
 import model.*;
+import static dataaccess.DataAccess.*;
 
-import java.util.ResourceBundle;
 import java.util.UUID;
 
 public class RegisterService {
-    private final UserDAO userDAO = new UserDAO();
-    private final AuthDAO authDAO = new AuthDAO();
 
     public RegisterResult register(RegisterRequest request) throws DataAccessException {
         //validate username input

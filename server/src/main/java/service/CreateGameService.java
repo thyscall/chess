@@ -1,16 +1,13 @@
 package service;
 
-import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
-import dataaccess.GameDAO;
+import static dataaccess.DataAccess.*;
 import model.AuthData;
 import model.CreateGameRequest;
 import model.CreateGameResult;
 import model.GameData;
 
 public class CreateGameService {
-    private final AuthDAO authDAO = new AuthDAO(); // checks for valid token
-    private final GameDAO gameDAO = new GameDAO(); // inserts game
 
     public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
         if (authToken == null || authToken.isEmpty()) {

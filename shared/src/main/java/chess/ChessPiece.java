@@ -27,7 +27,9 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -85,8 +87,8 @@ public class ChessPiece {
             case KNIGHT -> {
                 return new KnightMoveCalculator().pieceMoves(board, myPosition);
             }
-            case BISHOP -> {
-                return new  BishopMoveCalculator().pieceMoves(board, myPosition); // return instances method return statement -> a collection of chess moves
+            case BISHOP -> { // return instances method return statement -> a collection of chess moves
+                return new  BishopMoveCalculator().pieceMoves(board, myPosition);
             }
             case QUEEN -> {
                 return new QueenMoveCalculator().pieceMoves(board, myPosition);

@@ -20,7 +20,9 @@ public class RookMoveCalculator implements PieceMoveCalculator {
                 col += direction[1];
                 ChessPosition newPosition = new ChessPosition(row, col);
 
-                if (!board.isValidPosition(newPosition)) break;
+                if (!board.isValidPosition(newPosition)) {
+                    break;
+                }
                 ChessPiece targetPiece = board.getPiece(newPosition);
 
                 if (targetPiece == null) {

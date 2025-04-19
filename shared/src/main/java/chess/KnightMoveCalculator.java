@@ -22,7 +22,9 @@ public class KnightMoveCalculator implements PieceMoveCalculator {
 
             ChessPosition newPos = new ChessPosition(myPosition.getRow() + dir[0], myPosition.getColumn() + dir[1]);
 
-            if (!board.isValidPosition(newPos)) continue; // Skip invalid positions
+            if (!board.isValidPosition(newPos)) {
+                continue; // Skip invalid positions
+            }
 
             ChessPiece targetPiece = board.getPiece(newPos);
 

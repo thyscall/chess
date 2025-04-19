@@ -17,7 +17,9 @@ public class KingMoveCalculator implements PieceMoveCalculator {
             ChessPosition newPosition = new ChessPosition(myPosition.getRow() + direction[0],
                     myPosition.getColumn() + direction[1]);
 
-            if (!board.isValidPosition(newPosition)) continue; // Skip invalid positions
+            if (!board.isValidPosition(newPosition)) {
+                continue; // Skip invalid positions
+            }
 
             ChessPiece targetPiece = board.getPiece(newPosition);
 

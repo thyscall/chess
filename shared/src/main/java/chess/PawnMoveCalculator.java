@@ -47,7 +47,9 @@ public class PawnMoveCalculator implements PieceMoveCalculator {
         for (int[] move : diagonalCap) {
             ChessPosition capturePos = new ChessPosition(myPosition.getRow() + move[0], myPosition.getColumn() + move[1]);
 
-            if (!board.isValidPosition(capturePos)) continue; // Skip invalid positions
+            if (!board.isValidPosition(capturePos)) {
+                continue; // Skip invalid positions
+            }
 
             ChessPiece targetPiece = board.getPiece(capturePos);
             if (targetPiece != null && targetPiece.getTeamColor() != teamColor) {

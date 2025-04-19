@@ -21,7 +21,9 @@ public class QueenMoveCalculator implements PieceMoveCalculator {
                 col += direction[1];
                 ChessPosition newPosition = new ChessPosition(row, col);
 
-                if (!board.isValidPosition(newPosition)) break;
+                if (!board.isValidPosition(newPosition)) {
+                    break;
+                }
                 ChessPiece piece = board.getPiece(newPosition);
 
                 if (piece == null) {

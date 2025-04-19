@@ -25,8 +25,9 @@ public class BishopMoveCalculator implements PieceMoveCalculator {
 
                 ChessPosition newPos = new ChessPosition(row, col); // var to hold value for piece's new position
 
-                if (!board.isValidPosition(newPos))
+                if (!board.isValidPosition(newPos)) {
                     break; // check if position is valid by accessing isValidPosition method in ChessBoard
+                }
 
                 ChessPiece piece = board.getPiece(newPos); // set new position
 

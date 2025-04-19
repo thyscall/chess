@@ -1,27 +1,32 @@
 package server;
 
+import com.google.gson.Gson;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import service.ClearService;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-import com.google.gson.Gson;
+
+import java.util.Map;
 
 public class ClearHandler implements Route {
-    private final ClearService service = new ClearService();
+    private final ClearService clearService;
+    private final Gson gson = new Gson();
 
-    @Override
+    public ClearHandler(DataAccess db) {
+        this.clearService = new ClearService(db);
+    }
+
     public Object handle(Request req, Response res) {
         try {
-            //clear all data
-            service.clear();
-            res.status(200);
-            return "{}";
+            clearService.clear();
+            res.status(200); // success
+            return gson.toJson(Map.of());
+
         } catch (DataAccessException error) {
-            // int server error
-            res.status(500);
-            return new Gson().toJson(new ErrorMessage("Error: " + error.getMessage()));
+            res.status(500); // fail response
+            return gson.toJson(Map.of("message", "Error: " + error.getMessage()));
         }
     }
-    private record ErrorMessage(String message) {}
 }

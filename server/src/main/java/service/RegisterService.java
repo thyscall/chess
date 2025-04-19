@@ -1,33 +1,35 @@
 package service;
 
-import dataaccess.*;
-import model.*;
-import static dataaccess.DataAccess.*;
+import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
+import model.AuthData;
+import model.UserData;
 
-import java.util.UUID;
+import java.util.UUID; // use for random auth token
 
 public class RegisterService {
+    private final DataAccess db;
+    // connect to database
+    public RegisterService(DataAccess db) {
+        this.db = db;
+    }
 
-    public RegisterResult register(RegisterRequest request) throws DataAccessException {
-        //validate username input
-        if (request == null || request.getUsername() == null || request.getPassword() == null || request.getEmail() ==null) {
-            throw new DataAccessException("Error: Invalid username, password or email");
+    public AuthData register(UserData user) throws DataAccessException {
+        // no user data args missing or throw err
+        if (user.username() == null || user.password() == null || user.email() == null) {
+            throw new DataAccessException("Error: bad request");
         }
-        // check if username has been taken
-        if (userDAO.userExists(request.getUsername())) {
-            throw new DataAccessException("Error: Username already taken");
-        }
-        //register new user
-        UserData newUser = new UserData(request.getUsername(), request.getPassword(), request.getEmail());
-        // create new user with the new username, p word, and email
-        userDAO.createUser(newUser);
-        // auth token to go with it
-        String authToken = UUID.randomUUID().toString();
-        AuthData newAuth = new AuthData(authToken, request.getUsername());
-        //create auth token for new username
-        authDAO.createAuth(newAuth);
 
-        //return username and auth token
-        return new RegisterResult(request.getUsername(), authToken);
+        if (db.getUser(user.username()) != null) {
+            throw new DataAccessException("Error: already taken");
+        }
+        // add user to database
+        db.insertUser(user);
+        String token = UUID.randomUUID().toString(); // random token to auth login using UUID
+        AuthData authData = new AuthData(token, user.username());
+
+        // save auth token to database
+        db.insertAuth(authData);
+        return authData;
     }
 }

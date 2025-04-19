@@ -1,20 +1,26 @@
 package service;
 
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.*;
-import static dataaccess.DataAccess.*;
-import java.util.Collection;
+
+import java.util.List;
 
 public class ListGamesService {
-    public ListGamesResult listGames(String authToken) throws DataAccessException {
-        if (authToken == null || authToken.isBlank()) {
-            throw new DataAccessException("Error: unauthorized");
+    private final DataAccess db;
+
+    public ListGamesService(DataAccess db) {
+        this.db = db;
+    }
+
+    public ListGamesResult list(String token) {
+        try {
+            AuthData auth = db.getAuth(token);
+            if (auth == null) return new ListGamesResult(null, "Error: unauthorized");
+            List<GameData> games = db.listGames();
+            return new ListGamesResult(games, null);
+        } catch (DataAccessException e) {
+            return new ListGamesResult(null, "Error: " + e.getMessage());
         }
-        AuthData auth = authDAO.getAuth(authToken);
-        if (auth == null) {
-            throw new DataAccessException("Error: unauthorized");
-        }
-        Collection<GameData> games = gameDAO.listGames();
-        return new ListGamesResult(games);
     }
 }

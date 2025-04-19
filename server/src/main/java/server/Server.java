@@ -1,5 +1,7 @@
 package server;
 
+import dataaccess.DataAccess;
+import dataaccess.MemoryDataAccess;
 import spark.*;
 
 public class Server {
@@ -9,18 +11,17 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
+        DataAccess db = new MemoryDataAccess();
+
         // Register your endpoints and handle exceptions here.
+        Spark.delete("/db", new ClearHandler(db)); // Clears the database. Removes all users, games, and authTokens.
+        Spark.post("/user", new RegisterHandler(db)); //	Register a new user.
+        Spark.post("/session", new LoginHandler(db)); // Logs in an existing user (returns a new authToken).
+        Spark.delete("/session", new LogoutHandler(db)); // Logs out the user represented by the authToken.
+        Spark.post("/game", new CreateGameHandler(db)); // Creates a new game.
+        Spark.get("/game", new ListGamesHandler(db)); // Gives a list of all games.
+        Spark.put("/game", new JoinGameHandler(db)); // Verifies that the specified game exists and adds the caller as the requested color to the game.
 
-        Spark.post("/user", new RegisterHandler());
-        Spark.post("/session", new LoginHandler());
-        Spark.delete("/session", new LogoutHandler());
-        Spark.post("/game", new CreateGameHandler());
-        Spark.get("/game", new ListGamesHandler());
-        Spark.put("/game", new JoinGameHandler());
-        Spark.delete("/db", new ClearHandler());
-
-        //This line initializes the server and can be removed once you have a functioning endpoint 
-        Spark.init();
 
         Spark.awaitInitialization();
         return Spark.port();

@@ -1,39 +1,39 @@
 package service;
 
-import dataaccess.AuthDAO;
+import chess.ChessGame;
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import static dataaccess.DataAccess.*;
-
-import dataaccess.GameDAO;
-import model.AuthData;
-import model.CreateGameRequest;
-import model.CreateGameResult;
-import model.GameData;
+import model.*;
 
 public class CreateGameService {
-    private final AuthDAO authDAO;
-    private final GameDAO gameDAO;
+    private final DataAccess db;
+    private static int gameIDCounter = 1;
 
-    public CreateGameService(AuthDAO authDAO, GameDAO gameDAO) {
-        this.authDAO = authDAO;
-        this.gameDAO = gameDAO;
+    public CreateGameService(DataAccess db) {
+        this.db = db;
     }
 
-    public CreateGameResult createGame(String authToken, CreateGameRequest request) throws DataAccessException {
-        if (authToken == null || authToken.isEmpty()) {
-            throw new DataAccessException("Error: unauthorized");
-        }
-        AuthData authenticated = authDAO.getAuth(authToken);
-        if (authenticated == null) {
-            throw new DataAccessException("Error: unauthorized");
-        }
+    public CreateGameResult create(String token, CreateGameRequest req) {
+        try {
+            AuthData auth = db.getAuth(token);
 
-        if (request == null || request.getGameName() == null || request.getGameName().isBlank()) {
-            throw new DataAccessException("Error: bad request, game name missing");
-        }
-        GameData newGame = new GameData(null, null, null, request.getGameName(), null);
-        int gameID = gameDAO.createGame(newGame);
+            // unauth if no auth
+            if (auth == null) {
+                return new CreateGameResult(null, "Error: unauthorized");
+            }
+            // no name no game
+            if (req.gameName() == null || req.gameName().isBlank()) {
+                return new CreateGameResult(null, "Error: bad request");
+            }
+            // change ID after each came created
+            int id = gameIDCounter++;
+            ChessGame game = new ChessGame();
+            GameData gameData = new GameData(id, null, null, req.gameName(), game);
+            db.createGame(gameData);
+            return new CreateGameResult(id, null);
 
-        return new CreateGameResult(gameID);
+        } catch (DataAccessException error) {
+            return new CreateGameResult(null, "Error: " + error.getMessage());
+        }
     }
 }

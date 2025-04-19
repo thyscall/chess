@@ -1,15 +1,5 @@
 package model;
 
-import java.util.Collection;
+import java.util.List;
 
-public class ListGamesResult {
-    private final Collection<GameData> games;
-
-    public ListGamesResult(Collection<GameData> games) {
-        this.games = games;
-    }
-
-    public Collection<GameData> getGames() {
-        return games;
-    }
-}
+public record ListGamesResult(List<GameData> games, String message) {}

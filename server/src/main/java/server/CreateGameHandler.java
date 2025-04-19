@@ -10,36 +10,34 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+import java.util.Map;
+
 public class CreateGameHandler implements Route {
-    public final CreateGameService createGameService = new CreateGameService(DataAccess.authDAO, DataAccess.gameDAO);
+    private final CreateGameService gameService;
+    private final Gson gson = new Gson();
 
-    @Override
-    public Object handle(Request req, Response res) throws Exception {
-        try {
-            //get token from header
-            String authToken = req.headers("Authorization");
-            //request body deserialize JSON
-            CreateGameRequest request = new Gson().fromJson(req.body(), CreateGameRequest.class);
-            //run service
-            CreateGameResult result = createGameService.createGame(authToken, request);
+    public CreateGameHandler(DataAccess db) {
+        this.gameService = new CreateGameService(db);
+    }
 
-            res.status(200);
-            return new Gson().toJson(result);
-        } catch (DataAccessException error) {
-            String message = error.getMessage().toLowerCase();
-            if (message.contains("unauthorized")) {
-                res.status(401);
-            } else if (message.contains("bad request")) {
+    public Object handle(Request req, Response res) {
+        String token = req.headers("Authorization");
+        CreateGameRequest request = gson.fromJson(req.body(), CreateGameRequest.class);
+        CreateGameResult result = gameService.create(token, request);
+
+        if (result.message() != null) {
+            if (result.message().contains("bad request")) {
                 res.status(400);
-            } else {
+            } else if (result.message().contains("unauthorized")) {
+                res.status(401);
+            }
+            else {
                 res.status(500);
             }
-            return new Gson().toJson(new ErrorMessage(error.getMessage()));
-        } catch (Exception error) {
-            res.status(500);
-            return new Gson().toJson(new ErrorMessage("Error: " + error.getMessage()));
+            return gson.toJson(Map.of("message", result.message()));
         }
-    }
-    private record ErrorMessage(String message) {}
-}
 
+        res.status(200);
+        return gson.toJson(Map.of("gameID", result.gameID()));
+    }
+}

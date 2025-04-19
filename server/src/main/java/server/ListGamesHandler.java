@@ -1,32 +1,42 @@
 package server;
 
-import spark.Route;
-import spark.Response;
-import spark.Request;
 import com.google.gson.Gson;
+import dataaccess.DataAccess;
 import model.ListGamesResult;
 import service.ListGamesService;
-import dataaccess.DataAccessException;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+import java.util.Map;
 
 public class ListGamesHandler implements Route {
-    private final ListGamesService service = new ListGamesService();
+    private final ListGamesService listGamesService;
+    private final Gson gson = new Gson();
 
-    @Override
+    public ListGamesHandler(DataAccess db) {
+        this.listGamesService = new ListGamesService(db);
+    }
+
     public Object handle(Request req, Response res) {
-        try {
-            String authToken = req.headers("Authorization");
-            ListGamesResult result = service.listGames(authToken);
-            res.status(200);
-            return new Gson().toJson(result);
-        } catch (DataAccessException error) {
-            String message = error.getMessage().toLowerCase();
-            if (message.contains("unauthorized")) {
+        String token = req.headers("Authorization");
+        ListGamesResult result = listGamesService.list(token); // list of games using token as arg
+
+        String error = result.message();
+
+        if (error != null) {
+            if (error.contains("unauthorized")) {
+                // unauthoroized
                 res.status(401);
-            } else {
+            }
+            else {
+                // bad request
                 res.status(500);
             }
-            return new Gson().toJson(new ErrorMessage(error.getMessage()));
+            return gson.toJson(Map.of("message", error)); // json of error message
         }
+
+        res.status(200);
+        return gson.toJson(Map.of("games", result.games()));
     }
-    public record ErrorMessage (String message) {}
 }

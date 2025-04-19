@@ -1,20 +1,28 @@
 package service;
 
+import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import model.AuthData;
+
 import static dataaccess.DataAccess.*;
 
 public class LogoutService {
-    public void logout(String authToken) throws DataAccessException {
-        if (authToken == null || authToken.isBlank()) {
-            throw new DataAccessException("Error: unauthorized");
-        }
+    private final DataAccess db;
 
-        var auth = authDAO.getAuth(authToken);
+    public LogoutService(DataAccess db) {
+        this.db = db;
+    }
+
+    public void logout(String authToken) throws DataAccessException {
+        AuthData auth = db.getAuth(authToken);
+
+        // no token throw error
         if (auth == null) {
             throw new DataAccessException("Error: unauthorized");
         }
 
-        authDAO.deleteAuth(authToken);
+        // delete from hash table
+        db.deleteAuth(authToken);
     }
 }
 

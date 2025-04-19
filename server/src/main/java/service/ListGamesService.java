@@ -16,7 +16,9 @@ public class ListGamesService {
     public ListGamesResult list(String token) {
         try {
             AuthData auth = db.getAuth(token);
-            if (auth == null) return new ListGamesResult(null, "Error: unauthorized");
+            if (auth == null) {
+                return new ListGamesResult(null, "Error: unauthorized");
+            }
             List<GameData> games = db.listGames();
             return new ListGamesResult(games, null);
         } catch (DataAccessException e) {

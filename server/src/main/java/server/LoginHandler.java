@@ -23,22 +23,11 @@ public class LoginHandler implements Route {
         var loginReq = gson.fromJson(req.body(), LoginRequest.class);
         var result = loginService.login(loginReq);
 
-        if (result.message() != null) {
-            if (result.message().contains("bad request")) {
-                res.status(400);
-            }
-            else if (result.message().contains("unauthorized")) {
-                res.status(401);
-            }
-            else {
-                res.status(500);
-            }
-            return gson.toJson(Map.of("message", result.message()));
+        Object error = HandlerUtils.handleResult(res, result.message());
+        if (error != null) {
+            return error;
         }
-
-        res.status(200);
         return gson.toJson(Map.of("username", result.username(),
-                "authToken", result.authToken()
-        ));
+                "authToken", result.authToken()));
     }
 }

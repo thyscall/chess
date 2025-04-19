@@ -20,7 +20,7 @@ public class Server {
         Spark.delete("/session", new LogoutHandler(db)); // Logs out the user represented by the authToken.
         Spark.post("/game", new CreateGameHandler(db)); // Creates a new game.
         Spark.get("/game", new ListGamesHandler(db)); // Gives a list of all games.
-        Spark.put("/game", new JoinGameHandler(db)); // Verifies that the specified game exists and adds the caller as the requested color to the game.
+        Spark.put("/game", new JoinGameHandler(db)); // Verifies specified game exists, adds caller as requested...
 
 
         Spark.awaitInitialization();

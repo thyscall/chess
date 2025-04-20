@@ -4,6 +4,7 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ListGamesService {
@@ -20,7 +21,11 @@ public class ListGamesService {
                 return new ListGamesResult(null, "Error: unauthorized");
             }
             List<GameData> games = db.listGames();
+            if (games == null) {
+                games = new ArrayList<>();
+            }
             return new ListGamesResult(games, null);
+
         } catch (DataAccessException e) {
             return new ListGamesResult(null, "Error: " + e.getMessage());
         }

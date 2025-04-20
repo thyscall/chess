@@ -8,6 +8,7 @@ import java.util.Map;
 public class HandlerUtils {
     private static final Gson GSON = new Gson();
 
+    // applies to LoginHandler and CreateGameHandler
     public static Object handleResult(Response res, String message) {
         if (message != null) {
             if (message.contains("bad request")) {

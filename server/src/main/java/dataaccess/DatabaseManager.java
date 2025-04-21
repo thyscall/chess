@@ -69,4 +69,64 @@ public class DatabaseManager {
             throw new DataAccessException(e.getMessage());
         }
     }
+
+
+    // not in starter code
+    public static void initDB() throws DataAccessException{
+        try {
+            String sqlDatabase = "CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME;
+
+            try (Connection conn = DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
+                PreparedStatement statement = conn.prepareStatement(sqlDatabase)) {
+
+                statement.executeUpdate();
+            }
+        } catch (SQLException error) {
+            throw new DataAccessException("Error creating db" + error.getMessage());
+        }
+    }
+
+    // create tables if they do not exist on startup of server
+    public static void initTables() throws DataAccessException{
+        try (Connection conn = getConnection()) {
+            String[] tableStatements = {
+                    // users
+                    """
+            CREATE TABLE IF NOT EXISTS users (
+                username VARCHAR(255) PRIMARY KEY,
+                password_hash VARCHAR(255) NOT NULL,
+                email VARCHAR(255)
+            )
+            """,
+                    // Auth token table
+                    // token VARCHAR 36, rest 255
+                    """
+            CREATE TABLE IF NOT EXISTS auth_tokens (
+                token VARCHAR(36) PRIMARY KEY,
+                username VARCHAR(255),
+                FOREIGN KEY (username) REFERENCES users(username)
+            )
+            """,
+
+                    // games
+                    """
+            CREATE TABLE IF NOT EXISTS games (
+                game_id INT AUTO_INCREMENT PRIMARY KEY,
+                game_name VARCHAR(255),
+                white_username VARCHAR(255),
+                black_username VARCHAR(255),
+                game_state TEXT
+            )
+            """
+            };
+
+            for (String sql : tableStatements) {
+                try (PreparedStatement statement = conn.prepareStatement(sql)) {
+                    statement.executeUpdate();
+                }
+            }
+        } catch (SQLException error) {
+            throw new DataAccessException("Error with table config: " + error.getMessage());
+        }
+    }
 }

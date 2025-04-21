@@ -7,6 +7,14 @@ import spark.*;
 public class Server {
 
     public int run(int desiredPort) {
+
+        try {
+            dataaccess.DatabaseManager.initDB();
+            dataaccess.DatabaseManager.initTables();
+        } catch (Exception error) {
+            System.out.println("DB init failed: " + error.getMessage());
+        }
+
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");

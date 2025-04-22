@@ -9,6 +9,7 @@ public class MemoryDataAccess implements DataAccess {
     private final Map<String, UserData> users = new HashMap<>();
     private final Map<String, AuthData> auths = new HashMap<>();
     private final Map<Integer, GameData> games = new HashMap<>();
+    private int nextGameID = 1;
 
     public void clear() {
         users.clear();
@@ -39,8 +40,11 @@ public class MemoryDataAccess implements DataAccess {
         auths.remove(token);
     }
     // add new game to map
-    public void createGame(GameData game) {
-        games.put(game.gameID(), game);
+    public GameData createGame(GameData game) {
+        int id = nextGameID++;
+        GameData newGame = new GameData(id, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
+        games.put(id, newGame);
+        return game;
     }
     // find game from map
     public GameData getGame(int id) {

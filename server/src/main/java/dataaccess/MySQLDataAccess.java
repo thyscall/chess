@@ -1,8 +1,11 @@
 package dataaccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
 import model.*;
 import org.mindrot.jbcrypt.BCrypt;
 
+import javax.xml.crypto.Data;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +22,7 @@ public class MySQLDataAccess implements DataAccess {
     // clear methods from DataAccess
     @Override
     public void clear() throws DataAccessException {
+        // connect to db, pass SQL command to MySQL
         try (Connection conn = DatabaseManager.getConnection();
              Statement statement = conn.createStatement()) {
 
@@ -79,7 +83,7 @@ public class MySQLDataAccess implements DataAccess {
     @Override
     public void insertAuth(AuthData auth) throws DataAccessException {
         String sql = "INSERT INTO auth_tokens (token, username) VALUES (?, ?)";
-
+        // connect to db, pass SQL command to MySQL
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
@@ -97,6 +101,7 @@ public class MySQLDataAccess implements DataAccess {
     public AuthData getAuth(String token) throws DataAccessException {
         String sql = "SELECT token, username FROM auth_tokens WHERE token = ?";
 
+        // connect to db, pass SQL command to MySQL
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement statement = conn.prepareStatement(sql)) {
 
@@ -119,6 +124,7 @@ public class MySQLDataAccess implements DataAccess {
     public void deleteAuth(String authToken) throws DataAccessException {
         String sql = "DELETE FROM auth_tokens WHERE token = ?";
 
+        // connect to db, pass SQL command to MySQL
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -131,25 +137,104 @@ public class MySQLDataAccess implements DataAccess {
 
 
 
-//    // ---------
-//    // games methods from DataAccess
-//    @Override
-//    public void createGame(GameData game) throws DataAccessException {
-//        // TODO: insert with JSON serialization
-//    }
-//
-//    @Override
-//    public List<GameData> listGames() throws DataAccessException {
-//        return new ArrayList<>(); // TODO: Implement select
-//    }
-//
-//    @Override
-//    public GameData getGame(int gameId) throws DataAccessException {
-//        return null; // TODO: Implement lookup
-//    }
-//
+    // ---------
+    // games methods from DataAccess
+    @Override
+    public GameData createGame(GameData game) throws DataAccessException {
+        String sql = "INSERT INTO games (games_name, white_username, black_username, game_state) VALUES (?, ?, ?, ?)";
+
+        // connect to db, pass SQL command above to MySQL
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            String json = new Gson().toJson(game.game());
+
+            statement.setString(1, game.gameName());
+            statement.setString(2, game.whiteUsername());
+            statement.setString(3, game.blackUsername());
+            statement.setString(4, sql);
+
+            statement.executeUpdate();
+
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int gameID = keys.getInt(1);
+                    return new GameData(gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
+                }
+            }
+        } catch (SQLException error) {
+            throw new DataAccessException("Error creating game: " + error.getMessage());
+        }
+        return null;
+    }
+
+
+    // 1. connect to db
+    // 2. while loop thorugh rows in table
+    // 3. rebuild chess games from JSON
+    // 4. return list of GameData records of what is in db
+    @Override
+    public List<GameData> listGames() throws DataAccessException {
+        List<GameData> gamesList = new ArrayList<>();
+        String sql = "SELECT * FROM games";
+
+        // connect to db, pass SQL command to MySQL
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                // all columns of data in SQL tables
+                int gameID = resultSet.getInt("game_id");
+                String whiteUsername = resultSet.getString("white_username");
+                String blackUsername = resultSet.getString("black_username");
+                String gameName = resultSet.getString("game_name");
+                String gameStateJSON = resultSet.getString("game_state");
+
+                // deserial json, rebuild to GAmeData obj
+                ChessGame game = new Gson().fromJson(gameStateJSON, ChessGame.class);
+                GameData data = new GameData(gameID, whiteUsername, blackUsername, gameName, game);
+
+                // add info to list of GameData objs
+                gamesList.add(data);
+
+            }
+        } catch (SQLException error) {
+            throw new DataAccessException("Error with games list: " + error.getMessage());
+        }
+        return gamesList;
+    }
+
+
+    // use ID to find game -> use game to rebuild GameData obj, if not, errors
+    @Override
+    public GameData getGame(int gameID) throws DataAccessException {
+        String sql = "SELECT * FROM games WHERE game_id = ?";
+
+        // connect to db, pass SQL command to MySQL
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, gameID);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String gameName = resultSet.getString("gameName");
+                    String whiteUsername = resultSet.getString("white_username");
+                    String blackUsername = resultSet.getString("black_username");
+                    String gameStateJSON = resultSet.getString("game_state");
+
+                    // deserial json, rebuild to GAmeData obj
+                    ChessGame game = new Gson().fromJson(gameStateJSON, ChessGame.class);
+
+                    return new GameData(gameID, whiteUsername, blackUsername, gameName, game);
+                }
+            }
+        } catch (SQLException error) {
+            throw new DataAccessException("Error getting game: " + error.getMessage());
+        }
+        return null;
+    }
+
 //    @Override
 //    public void updateGame(GameData game) throws DataAccessException {
-//        // TODO: Implement update with deserialized state
 //    }
 //}

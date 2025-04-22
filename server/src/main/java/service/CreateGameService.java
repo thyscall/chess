@@ -7,7 +7,7 @@ import model.*;
 
 public class CreateGameService {
     private final DataAccess db;
-    private static int gameIDCounter = 1;
+//    private static int gameIDCounter = 1;
 
     public CreateGameService(DataAccess db) {
         this.db = db;
@@ -26,11 +26,10 @@ public class CreateGameService {
                 return new CreateGameResult(null, "Error: bad request");
             }
             // change ID after each came created
-            int id = gameIDCounter++;
             ChessGame game = new ChessGame();
-            GameData gameData = new GameData(id, null, null, req.gameName(), game);
-            db.createGame(gameData);
-            return new CreateGameResult(id, null);
+            GameData gameData = new GameData(0, null, null, req.gameName(), game);
+            GameData created = db.createGame(gameData);
+            return new CreateGameResult(created.gameID(), null);
 
         } catch (DataAccessException error) {
             return new CreateGameResult(null, "Error: " + error.getMessage());

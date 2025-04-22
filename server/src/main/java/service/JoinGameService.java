@@ -56,6 +56,9 @@ public class JoinGameService {
                     return "Error: bad request";
                 }
             }
+            System.out.println("Joining game as user: " + username);
+            System.out.println("Saving game data: " + game);
+
             // save game to database
             db.updateGame(game);
             return null;

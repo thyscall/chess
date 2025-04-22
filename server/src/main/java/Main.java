@@ -3,9 +3,14 @@ import server.Server;
 
 public class Main {
     public static void main(String[] args) {
-        var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-        System.out.println("♕ 240 Chess Server: " + piece);
-
-        new Server().run(8080);
+        try {
+            var server = new server.Server();
+            int port = server.run(8080);
+            System.out.printf("♕ 240 Chess Server running on port %d%n", port);
+        } catch (Exception error) {
+            System.err.println("Server start failed: " + error.getMessage());
+        }
+//        var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
+//        new Server().run(8080);
     }
 }

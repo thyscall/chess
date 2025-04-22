@@ -3,6 +3,7 @@ package service;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class LoginService {
             var user = db.getUser(req.username());
 
             // if no user or p word attempt != actual p word
-            if (user == null || !user.password().equals(req.password())) {
+            if (user == null || !BCrypt.checkpw(req.password(), user.password())) {
                 return new LoginResult(null, null, "Error: unauthorized");
             }
 
@@ -31,6 +32,7 @@ public class LoginService {
 
             // reg login with new token, match it to username
             db.insertAuth(new AuthData(token, req.username()));
+
             return new LoginResult(req.username(), token, null);
         } catch (DataAccessException error) {
             return new LoginResult(null, null, "Error: " + error.getMessage());

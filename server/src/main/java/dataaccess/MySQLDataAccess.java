@@ -108,7 +108,8 @@ public class MySQLDataAccess implements DataAccess {
             statement.setString(1, token);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return new AuthData(resultSet.getString("username"), resultSet.getString("token"));
+                    return new AuthData(resultSet.getString("token"),
+                            resultSet.getString("username"));
                 }
             }
 
@@ -141,17 +142,18 @@ public class MySQLDataAccess implements DataAccess {
     // games methods from DataAccess
     @Override
     public GameData createGame(GameData game) throws DataAccessException {
-        String sql = "INSERT INTO games (games_name, white_username, black_username, game_state) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO games (game_name, white_username, black_username, game_state) VALUES (?, ?, ?, ?)";
 
         // connect to db, pass SQL command above to MySQL
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             String json = new Gson().toJson(game.game());
 
             statement.setString(1, game.gameName());
             statement.setString(2, game.whiteUsername());
             statement.setString(3, game.blackUsername());
-            statement.setString(4, sql);
+            statement.setString(4, json);
 
             statement.executeUpdate();
 
@@ -161,10 +163,11 @@ public class MySQLDataAccess implements DataAccess {
                     return new GameData(gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), game.game());
                 }
             }
+            throw new DataAccessException("Failed to get game ID");
         } catch (SQLException error) {
             throw new DataAccessException("Error creating game: " + error.getMessage());
         }
-        return null;
+//        return null;
     }
 
 
@@ -174,8 +177,9 @@ public class MySQLDataAccess implements DataAccess {
     // 4. return list of GameData records of what is in db
     @Override
     public List<GameData> listGames() throws DataAccessException {
-        List<GameData> gamesList = new ArrayList<>();
         String sql = "SELECT * FROM games";
+        List<GameData> gamesList = new ArrayList<>();
+
 
         // connect to db, pass SQL command to MySQL
         try (Connection connection = DatabaseManager.getConnection();
@@ -184,9 +188,9 @@ public class MySQLDataAccess implements DataAccess {
             while (resultSet.next()) {
                 // all columns of data in SQL tables
                 int gameID = resultSet.getInt("game_id");
+                String gameName = resultSet.getString("game_name");
                 String whiteUsername = resultSet.getString("white_username");
                 String blackUsername = resultSet.getString("black_username");
-                String gameName = resultSet.getString("game_name");
                 String gameStateJSON = resultSet.getString("game_state");
 
                 // deserial json, rebuild to GAmeData obj
@@ -217,7 +221,7 @@ public class MySQLDataAccess implements DataAccess {
 
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    String gameName = resultSet.getString("gameName");
+                    String gameName = resultSet.getString("game_name");
                     String whiteUsername = resultSet.getString("white_username");
                     String blackUsername = resultSet.getString("black_username");
                     String gameStateJSON = resultSet.getString("game_state");

@@ -234,7 +234,27 @@ public class MySQLDataAccess implements DataAccess {
         return null;
     }
 
-//    @Override
-//    public void updateGame(GameData game) throws DataAccessException {
-//    }
-//}
+    @Override
+    public void updateGame(GameData game) throws DataAccessException {
+        String sql = """
+                UPDATE games
+                SET white_username = ?, black_username = ?, game_state = ?
+                WHERE game_id = ?
+                """;
+        // db connect + deserialize GSON
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)){
+
+            String json = new Gson().toJson(game.game());
+
+            statement.setString(1, game.whiteUsername());
+            statement.setString(2, game.blackUsername());
+            statement.setString(3, json);
+            statement.setInt(4, game.gameID());
+
+            statement.executeUpdate();
+        } catch (SQLException error) {
+            throw new DataAccessException("Error updating game: " + error.getMessage());
+        }
+    }
+}

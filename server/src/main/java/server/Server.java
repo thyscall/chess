@@ -1,12 +1,14 @@
 package server;
 
 import dataaccess.DataAccess;
+import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
+import dataaccess.MySQLDataAccess;
 import spark.*;
 
 public class Server {
 
-    public int run(int desiredPort) {
+    public int run(int desiredPort) throws DataAccessException {
 
         try {
             dataaccess.DatabaseManager.initDB();
@@ -19,7 +21,7 @@ public class Server {
 
         Spark.staticFiles.location("web");
 
-        DataAccess db = new MemoryDataAccess();
+        DataAccess db = new MySQLDataAccess();
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", new ClearHandler(db)); // Clears the database. Removes all users, games, and authTokens.

@@ -98,13 +98,29 @@ public class DAOTests {
     }
 
 
+    @Test
+    @DisplayName("No token ")
+    public void testGetAuthNeg() throws DataAccessException {
+        assertNull(db.getAuth("noToken"));
+    }
 
+    @Test
+    @DisplayName("Remove successfully from db")
+    public void testDeleteAuthPos() throws DataAccessException {
+        // create user and insert into db to delete later
+        db.insertUser(new UserData("player1", "password", "email@email.com"));
 
-//    @Test
-//    @DisplayName("No token ")
-//    public void testGetAuthNeg() throws DataAccessException {
-//        assertNull(db.getAuth("noToken"));
-//    }
+        AuthData auth = new AuthData("tokenTest", "player1");
 
+        db.insertAuth(auth);
+        db.deleteAuth("tokenTest");
+        assertNull(db.getAuth("tokenTest"));
 
+    }
+
+    @Test
+    @DisplayName("Can't delete a token that doesn't exist")
+    public void testDeleteAuthNeg() throws DataAccessException {
+        db.deleteAuth("tokenTest"); // token never inserted
+    }
 }

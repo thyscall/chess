@@ -1,9 +1,15 @@
 package dataaccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
+import model.AuthData;
+import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -51,5 +57,54 @@ public class DAOTests {
 
 
     // AUTH TESTS
+    // tests if a token can be inserted and found
+    @Test
+    @DisplayName("Insert token success")
+    public void testInsertAuthPos() throws DataAccessException {
+        UserData user = new UserData("player1", "testPass", "email@email.com");
+        db.insertUser(user);
+
+        AuthData auth = new AuthData("token10", "player1");
+        db.insertAuth(auth);
+        assertNotNull(db.getAuth("token10"));
+    }
+
+    @Test
+    @DisplayName("Dupe token fail")
+    public void testInsertAuthNeg() throws DataAccessException {
+        // create users
+        db.insertUser(new UserData("player1", "password", "email1"));
+        db.insertUser(new UserData("player2", "password", "email2"));
+
+        // test when they have the same token
+        AuthData auth = new AuthData("dupeToken", "player1");
+        db.insertAuth(auth);
+        AuthData dupe = new AuthData("dupeToken", "player2");
+        assertThrows(DataAccessException.class, () -> db.insertAuth(dupe));
+    }
+
+    @Test
+    @DisplayName("No token ")
+    public void testGetAuthPos() throws DataAccessException {
+        // create user with insertUser
+        db.insertUser(new UserData("player1", "password", "email@email.com"));
+
+        AuthData auth = new AuthData("token10", "player1");
+        db.insertAuth(auth);
+        AuthData got = db.getAuth("token10");
+        assertNotNull(got);
+        assertEquals("player1", got.username());
+
+    }
+
+
+
+
+//    @Test
+//    @DisplayName("No token ")
+//    public void testGetAuthNeg() throws DataAccessException {
+//        assertNull(db.getAuth("noToken"));
+//    }
+
 
 }

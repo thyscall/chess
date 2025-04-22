@@ -1,7 +1,9 @@
 package dataaccess;
 
+import chess.ChessBoard;
 import chess.ChessGame;
-import com.google.gson.Gson;
+import chess.ChessPiece;
+import chess.ChessPosition;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -122,5 +124,106 @@ public class DAOTests {
     @DisplayName("Can't delete a token that doesn't exist")
     public void testDeleteAuthNeg() throws DataAccessException {
         db.deleteAuth("tokenTest"); // token never inserted
+    }
+
+    // GAME TESTS
+    @Test
+    @DisplayName("Game created and verified")
+    public void testCreateGamePos() throws DataAccessException {
+        ChessGame cGame = new ChessGame();
+        GameData game = new GameData(0,null,null,"game1", cGame);
+        GameData createdGame = db.createGame(game);
+        // get from db
+        assertNotNull(db.getGame(createdGame.gameID()));
+    }
+
+    @Test
+    @DisplayName("Game with invalid ID")
+    public void testCreateGameNeg() throws DataAccessException {
+        assertNull(db.getGame(1234));
+    }
+
+    @Test
+    @DisplayName("Game created and verified")
+    public void testUpdateGamePos() throws DataAccessException {
+        ChessGame cGame = new ChessGame();
+        GameData game = db.createGame(new GameData(0, null, null, "updateTest", cGame));
+        GameData update = new GameData(game.gameID(), "whiteUsername", "blackUsername", game.gameName(), game.game());
+
+        db.updateGame(update);
+
+        GameData got = db.getGame(game.gameID());
+
+        assertEquals("whiteUsername", got.whiteUsername());
+        assertEquals("blackUsername", got.blackUsername());
+    }
+
+    @Test
+    @DisplayName("Invalid ID")
+    public void testUpdateGameNeg() throws DataAccessException {
+        ChessGame cGame = new ChessGame();
+        GameData wrongGame = new GameData(1234, "err", "notgood", "wrongGame", cGame);
+
+        db.updateGame(wrongGame);
+        assertNull(db.getGame(1234));
+    }
+
+    @Test
+    @DisplayName("Count games in list")
+    public void testListGamePos() throws DataAccessException {
+        // create games in db
+        db.createGame(new GameData(0, null, null, "game1", new ChessGame()));
+        db.createGame(new GameData(0, null, null, "game2", new ChessGame()));
+
+        // create a list with games in db
+        List<GameData> games = db.listGames();
+        // count all valid games
+        assertEquals(2, games.size());
+    }
+
+    @Test
+    @DisplayName("List when no games exist")
+    public void testListGameNeg() throws DataAccessException {
+        List<GameData> games = db.listGames();
+        assertNotNull(games, "Expected not null");
+        assertEquals(0, games.size(), "Expecting empty list when no games in db");
+    }
+
+
+    // CLEAR TEST
+    @Test
+    @DisplayName("Invalid ID")
+    public void testClearPos() throws DataAccessException {
+        db.insertUser(new UserData("username", "password", "email@email.com"));
+        db.clear();
+        assertNull(db.getUser("username"));
+    }
+
+    // "examine your game board" from Phase 4 spec
+    @Test
+    @DisplayName("Update board and server")
+    public void testExamineBoard() throws DataAccessException {
+        // create new game
+        ChessGame game = new ChessGame();
+        ChessBoard board = game.getBoard();
+        // put piece in new position
+        ChessPosition pos = new ChessPosition(4, 4);
+        ChessPiece piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN);
+        board.addPiece(pos, piece);
+
+        // add game to db
+        GameData ogGame = db.createGame(new GameData(0, null, null, "boardExamine", game));
+        //update game with game changes
+        db.updateGame(new GameData(ogGame.gameID(), null, null, "boardExamine", game));
+
+        // get game from db
+        GameData result = db.getGame(ogGame.gameID());
+        ChessPiece gotPiece = result.game().getBoard().getPiece(pos);
+
+        // test valid piece exists after restart
+        assertNotNull(gotPiece);
+        assertEquals(ChessPiece.PieceType.QUEEN, gotPiece.getPieceType());
+        assertEquals(ChessGame.TeamColor.WHITE, gotPiece.getTeamColor());
+
     }
 }

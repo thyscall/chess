@@ -115,8 +115,8 @@ public class DAOTests {
         AuthData auth = new AuthData("tokenTest", "player1");
 
         db.insertAuth(auth);
-        db.deleteAuth("tokenTest");
-        assertNull(db.getAuth("tokenTest"));
+        db.deleteAuth("tokenTest"); // delete token from db
+        assertNull(db.getAuth("tokenTest")); // null validates token was deleted
 
     }
 
@@ -161,6 +161,7 @@ public class DAOTests {
     @Test
     @DisplayName("Invalid ID")
     public void testUpdateGameNeg() throws DataAccessException {
+        // create a wrong game and a good game to compare
         ChessGame cGame = new ChessGame();
         GameData wrongGame = new GameData(1234, "err", "notgood", "wrongGame", cGame);
 
@@ -224,6 +225,5 @@ public class DAOTests {
         assertNotNull(gotPiece);
         assertEquals(ChessPiece.PieceType.QUEEN, gotPiece.getPieceType());
         assertEquals(ChessGame.TeamColor.WHITE, gotPiece.getTeamColor());
-
     }
 }

@@ -38,7 +38,12 @@ public class ServerFacadeTests {
     // replace this with my unit tests
     @Test
     public void registerSuccess() throws Exception {
+        var request = new RegisterRequest("john", "pass321", "email@email.com");
+        var result = facade.register(request);
 
+        assertNotNull(result);
+        assertNotNull(result.authToken());
+        assertEquals("john", result.username());
     }
 
 }

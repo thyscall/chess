@@ -21,17 +21,14 @@ public class ServerFacadeTests {
         System.out.println("Started test HTTP server on " + port);
     }
 
-    @AfterAll
-    static void stopServer() {
-        server.stop();
-    }
+
 
 
 
     // "Write positive and negative unit tests for each method
     // on your ServerFacade class (all the methods used to call your server)"
-    @BeforeAll
-    public static void clearDB() throws Exception {
+    @BeforeEach
+    public void clearDB() throws Exception {
         facade.clear();
     }
 
@@ -39,11 +36,16 @@ public class ServerFacadeTests {
     @Test
     public void registerSuccess() throws Exception {
         var request = new RegisterRequest("john", "pass321", "email@email.com");
-        var result = facade.register(request);
+        RegisterRequest result = facade.register(request);
 
         assertNotNull(result);
         assertNotNull(result.authToken());
         assertEquals("john", result.username());
     }
 
+
+    @AfterAll
+    static void stopServer() {
+        server.stop();
+    }
 }

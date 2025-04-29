@@ -22,9 +22,6 @@ public class ServerFacadeTests {
     }
 
 
-
-
-
     // "Write positive and negative unit tests for each method
     // on your ServerFacade class (all the methods used to call your server)"
     @BeforeEach
@@ -34,15 +31,23 @@ public class ServerFacadeTests {
 
     // replace this with my unit tests
     @Test
-    public void registerSuccess() throws Exception {
+    @DisplayName("Clear success")
+    public void clearPos() throws Exception {
+        // check that clearDB ran properly and cleared DB successfully
+        assertDoesNotThrow(() -> facade.clear());
+    }
+
+    // new user can register on server
+    @Test
+    @DisplayName("Register success")
+    public void registerPos() throws Exception {
         var request = new RegisterRequest("john", "pass321", "email@email.com");
-        RegisterRequest result = facade.register(request);
+        var result = facade.register(request);
 
         assertNotNull(result);
         assertNotNull(result.authToken());
         assertEquals("john", result.username());
     }
-
 
     @AfterAll
     static void stopServer() {

@@ -17,8 +17,8 @@ public class ServerFacadeTests {
     public static void init() {
         server = new Server();
         var port = server.run(0);
-        facade = new ServerFacade("http://localhost:" + port);
         System.out.println("Started test HTTP server on " + port);
+        facade = new ServerFacade("http://localhost:" + port);
     }
 
 
@@ -48,6 +48,18 @@ public class ServerFacadeTests {
         assertNotNull(result.authToken());
         assertEquals("john", result.username());
     }
+
+    // duplicate user not allowed, not allowed to create one
+    @Test
+    @DisplayName("Username already taken")
+    public void registerNeg() throws Exception {
+        var request = new RegisterRequest("johnDupe", "passDupe", "johndupe@email.com");
+        // initial registration
+        facade.register(request);
+        // second reg not allowed
+        assertThrows(Exception.class, () -> facade.register(request));
+    }
+
 
     @AfterAll
     static void stopServer() {

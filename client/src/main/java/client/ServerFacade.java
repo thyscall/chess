@@ -33,9 +33,13 @@ public class ServerFacade {
         return this.makeRequest("POST", "/user", request, AuthData.class);
     }
 
-    public void login(LoginResult loginResult) throws Exception {}
+    public AuthData login(LoginRequest request) throws Exception {
+        return this.makeRequest("POST", "/session", request, AuthData.class);
+    }
 
-    public void logout(LogoutRequest logoutRequest) throws Exception {}
+    public AuthData logout(LogoutRequest request) throws Exception {
+        return this.makeRequest("DELETE", "/session", request, AuthData.class);
+    }
 
     public void createGame(CreateGameRequest createGameRequest) throws Exception {}
 

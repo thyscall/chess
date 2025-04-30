@@ -1,5 +1,6 @@
 package client;
 
+import model.LoginRequest;
 import model.RegisterRequest;
 import org.junit.jupiter.api.*;
 import server.Server;
@@ -60,6 +61,33 @@ public class ServerFacadeTests {
         assertThrows(Exception.class, () -> facade.register(request));
     }
 
+    // login good after registering user
+    @Test
+    @DisplayName("Login with new user")
+    public void loginPos() throws Exception {
+        var register = new RegisterRequest("userOkay", "passOkay", "email@email.com");
+        // register new user
+        facade.register(register);
+
+        var login = new LoginRequest("userOkay", "passOkay");
+        var result = facade.login(login);
+        // second login attempt should pass bc registered
+        assertNotNull(result);
+        assertNotNull(result.authToken());
+        assertEquals("userOkay", result.username());
+    }
+
+    // login failed bc wrong password
+    @Test
+    @DisplayName("Login with new user")
+    public void loginNeg() throws Exception {
+        var register = new RegisterRequest("testUser", "goodPass", "email@email.com");
+        facade.register(register);
+        // try to log in with wrong password
+        var badLogin = new LoginRequest("testUser", "badPass");
+        // throw error with wrong password
+        assertThrows(Exception.class, () -> facade.login(badLogin));
+    }
 
     @AfterAll
     static void stopServer() {

@@ -60,14 +60,20 @@ public class ServerFacade {
         http.setDoOutput(true);
 
         if (request != null) {
-            http.addRequestProperty("Body", "application/json");
+            http.addRequestProperty("Content-Type", "application/json");
+        }
+
+        // if Logout obj, set auth header
+        if (request instanceof LogoutRequest logout) {
+            http.setRequestProperty("Authorization", logout.getAuthToken());
+        }
+
+        if (request != null) {
             String JSONReq = new com.google.gson.Gson().toJson(request);
             try (OutputStream reqBody = http.getOutputStream()) {
                 reqBody.write(JSONReq.getBytes());
             }
         }
-        // send http request with .connect()
-        http.connect();
 
         var status = http.getResponseCode();
         // error only if errors are bad, not 200  level

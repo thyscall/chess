@@ -1,6 +1,7 @@
 package client;
 
 import model.LoginRequest;
+import model.LogoutRequest;
 import model.RegisterRequest;
 import org.junit.jupiter.api.*;
 import server.Server;
@@ -79,15 +80,36 @@ public class ServerFacadeTests {
 
     // login failed bc wrong password
     @Test
-    @DisplayName("Login with new user")
+    @DisplayName("Login fail wrong password")
     public void loginNeg() throws Exception {
         var register = new RegisterRequest("testUser", "goodPass", "email@email.com");
         facade.register(register);
         // try to log in with wrong password
         var badLogin = new LoginRequest("testUser", "badPass");
-        // throw error with wrong password
+        // throw error with wrong password, use lamda
         assertThrows(Exception.class, () -> facade.login(badLogin));
     }
+
+
+    // logout successful
+    @Test
+    @DisplayName("Logout success")
+    public void logoutPos() throws Exception {
+        var register = new RegisterRequest("testUser", "testPass", "email@email.com");
+        var auth = facade.register(register);
+
+        var logoutReq = new LogoutRequest(auth.authToken());
+        assertDoesNotThrow(() -> facade.logout(logoutReq));
+    }
+
+    @Test
+    @DisplayName("Logout failed, wrong token")
+    public void logoutNeg() throws Exception {
+        var logoutReq = new LogoutRequest("wrong-token");
+        assertThrows(Exception.class, () -> facade.logout(logoutReq));
+
+    }
+
 
     @AfterAll
     static void stopServer() {

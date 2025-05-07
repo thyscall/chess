@@ -1,8 +1,6 @@
 package client;
 
-import model.LoginRequest;
-import model.LogoutRequest;
-import model.RegisterRequest;
+import model.*;
 import org.junit.jupiter.api.*;
 import server.Server;
 
@@ -110,6 +108,20 @@ public class ServerFacadeTests {
 
     }
 
+
+    @Test
+    @DisplayName("Create Game success")
+    public void createGamePos() throws Exception {
+        var registerReq = new RegisterRequest("testUser", "testPass", "email@email.com");
+
+        AuthData auth = facade.register(registerReq);
+        //create game
+        var createGameReq = new CreateGameRequest("Test Game");
+        CreateGameResult result = facade.createGame(auth.authToken(), createGameReq);
+
+        assertNotNull(result);
+        assertTrue(result.gameID() > 0);
+    }
 
     @AfterAll
     static void stopServer() {

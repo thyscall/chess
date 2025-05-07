@@ -26,22 +26,25 @@ public class ServerFacade {
     // joinGame(JoinGameRequest)
 
     public void clear() throws Exception {
-        this.makeRequest("DELETE", "/db", null, null);
+        this.makeRequest("DELETE", "/db", null, null, null);
     }
 
     public AuthData register( RegisterRequest request) throws Exception {
-        return this.makeRequest("POST", "/user", request, AuthData.class);
+        return this.makeRequest("POST", "/user", request, AuthData.class, null);
     }
 
     public AuthData login(LoginRequest request) throws Exception {
-        return this.makeRequest("POST", "/session", request, AuthData.class);
+        return this.makeRequest("POST", "/session", request, AuthData.class, null);
     }
 
     public AuthData logout(LogoutRequest request) throws Exception {
-        return this.makeRequest("DELETE", "/session", request, AuthData.class);
+        return this.makeRequest("DELETE", "/session", request, AuthData.class, request.getAuthToken());
     }
 
-    public void createGame(CreateGameRequest createGameRequest) throws Exception {}
+    public CreateGameResult createGame(String authToken, CreateGameRequest request) throws Exception {
+        return this.makeRequest("POST", "/game", request, CreateGameResult.class, authToken);
+
+    }
 
     public void listGames(ListGamesRequest listGamesRequest) throws Exception {}
 
@@ -53,7 +56,7 @@ public class ServerFacade {
     // build URL with server and API found in Server.java calls
     // connect to URL
     // error only if errors are bad, not 200  level
-    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws Exception {
+    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, String authToken) throws Exception {
         URL url = (new URI(serverURL + path)).toURL();
         HttpURLConnection http = (HttpURLConnection) url.openConnection();
         http.setRequestMethod(method);
@@ -63,19 +66,19 @@ public class ServerFacade {
             http.addRequestProperty("Content-Type", "application/json");
         }
 
-        // if Logout obj, set auth header
-        if (request instanceof LogoutRequest logout) {
-            http.setRequestProperty("Authorization", logout.getAuthToken());
+        if (authToken != null) {
+            http.setRequestProperty("Authorization", authToken);
         }
 
+
         if (request != null) {
-            String JSONReq = new com.google.gson.Gson().toJson(request);
+            String jsonReq = new com.google.gson.Gson().toJson(request);
             try (OutputStream reqBody = http.getOutputStream()) {
-                reqBody.write(JSONReq.getBytes());
+                reqBody.write(jsonReq.getBytes());
             }
         }
 
-        var status = http.getResponseCode();
+        int status = http.getResponseCode();
         // error only if errors are bad, not 200  level
         if (status / 100 != 2) {
             throw new Exception("Server error: " + status);

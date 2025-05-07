@@ -5,6 +5,8 @@ import org.junit.jupiter.api.*;
 import server.Server;
 
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -121,6 +123,33 @@ public class ServerFacadeTests {
 
         assertNotNull(result);
         assertTrue(result.gameID() > 0);
+    }
+
+    @Test
+    @DisplayName("Create Game fail")
+    public void createGameNeg() throws Exception {
+        var request = new CreateGameRequest("Bad Game"); // create new game then add bad token
+        // test game with bad token
+        assertThrows(Exception.class, () -> facade.createGame("badToken", request));
+    }
+
+    @Test
+    @DisplayName("List Games success")
+    public void listGamesPos() throws Exception {
+        var request = new RegisterRequest("testUser", "testPass", "email@email.com");
+        AuthData result = facade.register(request);
+        String authToken = result.authToken();
+
+        ListGamesResult games = facade.listGames(authToken);
+
+
+        assertNotNull(games);
+    }
+
+    @Test
+    @DisplayName("List Games failure")
+    public void listGamesNeg() throws Exception {
+        assertThrows(Exception.class, () -> facade.listGames("badToken"));
     }
 
     @AfterAll

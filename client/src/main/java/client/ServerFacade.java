@@ -46,7 +46,9 @@ public class ServerFacade {
 
     }
 
-    public void listGames(ListGamesRequest listGamesRequest) throws Exception {}
+    public ListGamesResult listGames(String authToken) throws Exception {
+        return this.makeRequest("GET", "/game", null, ListGamesResult.class, authToken);
+    }
 
     public void joinGame(JoinGameRequest joinGameRequest) throws Exception {}
 

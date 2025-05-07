@@ -152,6 +152,28 @@ public class ServerFacadeTests {
         assertThrows(Exception.class, () -> facade.listGames("badToken"));
     }
 
+    @Test
+    @DisplayName("Join game success")
+    public void joinGamePos() throws Exception {
+        // reg user and get auth token
+        var registerReq = new RegisterRequest("testUser", "testPass", "email@email.com");
+        AuthData auth = facade.register(registerReq);
+        // create game and join it
+        var createGameReq = new CreateGameRequest("testGame");
+        CreateGameResult gameResult = facade.createGame(auth.authToken(), createGameReq);
+        var joinGameReq = new JoinGameRequest("WHITE", gameResult.gameID());
+
+        assertDoesNotThrow(() -> facade.joinGame(auth.authToken(), joinGameReq));
+    }
+
+    @Test
+    @DisplayName("Join game failure")
+    public void joinGameNeg() throws Exception {
+        var joinGameReq = new JoinGameRequest("WHITE", 88888);
+        // test bad token
+        assertThrows(Exception.class, () -> facade.joinGame("badToken", joinGameReq));
+    }
+
     @AfterAll
     static void stopServer() {
         server.stop();

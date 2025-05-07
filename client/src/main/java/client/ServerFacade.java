@@ -50,7 +50,10 @@ public class ServerFacade {
         return this.makeRequest("GET", "/game", null, ListGamesResult.class, authToken);
     }
 
-    public void joinGame(JoinGameRequest joinGameRequest) throws Exception {}
+    // Spark.put("/game", new JoinGameHandler(db));
+    public void joinGame(String authToken, JoinGameRequest request) throws Exception {
+        this.makeRequest("PUT", "/game", request, null, authToken);
+    }
 
 
     // "handle sending and receiving HTTP requests to and from your server"

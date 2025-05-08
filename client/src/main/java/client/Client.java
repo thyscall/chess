@@ -119,7 +119,7 @@ public class Client {
             authToken = authData.authToken();
             System.out.println(authData.username() + " logged in!");
         } catch (Exception error) {
-            System.out.println("Registration failed... ");
+            System.out.println("Registration failed... " + error.getMessage());
         }
     }
 
@@ -137,9 +137,9 @@ public class Client {
             var req = new RegisterRequest(username, password, email);
             var authData = server.register(req);
             authToken = authData.authToken();
-            System.out.println(authData.username() + "logged in!");
+            System.out.println(authData.username() + " logged in!");
         } catch (Exception error) {
-            System.out.println("Registration failed... ");
+            System.out.println("Registration failed... " + error.getMessage());
         }
     }
 

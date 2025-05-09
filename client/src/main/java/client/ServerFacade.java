@@ -16,14 +16,6 @@ public class ServerFacade {
         this.serverURL = serverURL;
     }
 
-    // methods needed
-    // clear()
-    // register(RegisterRequest)
-    // login(LoginRequest)
-    // logout(LogoutRequest)
-    // createGame(CreateGameRequest)
-    // listGames(ListGamesRequest)
-    // joinGame(JoinGameRequest)
 
     public void clear() throws Exception {
         this.makeRequest("DELETE", "/db", null, null, null);

@@ -36,7 +36,4 @@ public class RegisterRequest {
     public void setEmail(String email) {
         this.email = email;
     }
-    public UserData toUserData() {
-        return new UserData(username, password, email);
-    }
 }

@@ -54,8 +54,8 @@ public class Client {
             // functionality post auth
             case "create game" -> runCreateGame();
             case "list games" -> runListGames();
-            case "play game" -> runJoinGame("white");
-            case "observe game" -> runJoinGame(null);
+            case "play game" -> runJoinGame();
+            case "observe game" -> runJoinGame();
 
             case "quit" -> {
                 System.out.println("See ya!");
@@ -167,37 +167,51 @@ public class Client {
         }
     }
 
-    private void runJoinGame(String userColor) {
+    private void runJoinGame() {
         runListGames();
 
         if (gamesList.isEmpty()) {
             System.out.println("Games list is empty. Create a game name before joining one.");
             return;
         }
-        System.out.print("Enter game number to join game: ");
 
+        // get game number before asking for team color
+        System.out.print("Enter game number to join game: ");
+        int index;
         try {
-            int index = Integer.parseInt(scanner.nextLine().trim()) - 1;
+            index = Integer.parseInt(scanner.nextLine().trim()) - 1;
 
             if (index < 0 || index >= gamesList.size()) {
                 System.out.println("Game number is invalid");
                 return;
             }
-
-            int gameID = gamesList.get(index).gameID();
-            server.joinGame(authToken, new JoinGameRequest(userColor, gameID));
-            System.out.println("Game joined!");
-
-            drawBoard();
-
         } catch (NumberFormatException error) {
-            System.out.println("Enter a valid game number");
+            System.out.println("That game number doesn't look right... Try another");
+            return;
+        }
+
+        // get team color from user
+        System.out.print("Choose your team. White or Black? ");
+        String userTeamColor = scanner.nextLine().trim().toLowerCase();
+        if (!userTeamColor.equals("white") && !userTeamColor.equals("black")) {
+            System.out.println("I don't recognize that team. White or Black? ");
+            return;
+        }
+
+        // then join game as team color
+        int gameID = gamesList.get(index).gameID();
+        try {
+            server.joinGame(authToken, new JoinGameRequest(userTeamColor, gameID));
+            System.out.println("Game joined as " + userTeamColor + "!");
+
+            // then draw board
+            drawBoard(userTeamColor.equals("black"));
         } catch (Exception error) {
             System.out.println("Failed to join game... " + error.getMessage());
         }
     }
 
-    public void drawBoard() {
+    public void drawBoard(boolean flip) {
         // ANSI chars styling
         String reset = "\033[0m";
         String labels = "\033[38;2;89;60;40m";              // brown
@@ -211,43 +225,64 @@ public class Client {
 
         // Column labels after indent (3 chars)
         System.out.print("   ");
-        for (char col = 'a'; col <= 'h'; col++) {
+        for (int i = 0; i < 8; i++) {
+            char col = (char) ('a' + (flip ? 7-i : i));
             System.out.print(labels + col + "  " + reset);
         }
         System.out.println();
 
         // row labels left side
         for (int row = 0; row < 8; row++) {
-            System.out.print(labels + (8 - row) + " " + reset);
+            int normRow = flip ? row : 7 - row;
+            System.out.print(labels + (flip ? row + 1 : 8 - row) + " " + reset);
+
             for (int col = 0; col < 8; col++) {
+                int normCol = flip ? 7 - col : col;
                 // every other square rotating color
-                String board = ((row + col) % 2 == 0) ? lightSquares : darkSquares;
+                String boardColor = ((normRow + normCol) % 2 == 0) ? darkSquares : lightSquares;
                 String piece = " ";
-                // add black pieces to row 8 (8-0 = row 8)
-                if (row == 0) {
-                    piece = blackPieceColor + blackPieces[col];
-                }
-                // add black pawns to row 7 (8-1= row 7)
-                else if (row == 1) {
-                    piece = blackPieceColor + "♟";
-                }
-                // add white pawns to row 2 (8-6= row 2)
-                else if (row == 6) {
-                    piece = whitePieceColor + "♟";
-                }
-                // add normal white pieces to row 1 (8-7= row 1)
-                else if (row == 7) {
-                    piece = whitePieceColor + whitePieces[col];
+
+                if (!flip) {
+                    // add black pieces to row 8 (8-0 = row 8)
+                    if (normRow == 0) {
+                        piece = whitePieceColor + whitePieces[normCol];
+                    }
+                    // add black pawns to row 7 (8-1= row 7)
+                    else if (normRow == 1) {
+                        piece = whitePieceColor + "♟";
+                    }
+                    // add white pawns to row 2 (8-6= row 2)
+                    else if (normRow == 6) {
+                        piece = blackPieceColor + "♟";
+                    }
+                    // add normal white pieces to row 1 (8-7= row 1)
+                    else if (normRow == 7) {
+                        piece = blackPieceColor + blackPieces[normCol];
+                    }
+                } else {
+                    if (normRow == 0) {
+                        piece = blackPieceColor + blackPieces[normCol];
+                    }
+                    else if (normRow == 1) {
+                        piece = blackPieceColor + "♟";
+                    }
+                    else if (normRow == 6) {
+                        piece = whitePieceColor + "♟";
+                    }
+                    else if (normRow == 7) {
+                        piece = whitePieceColor + whitePieces[normCol];
+                    }
                 }
 
-                System.out.print(board + " " + piece + " " + reset);
+                System.out.print(boardColor + " " + piece + " " + reset);
             }
-            System.out.println();
+            System.out.print(labels + (flip ? row + 1 : 8 - row) + " " + reset);
         }
 
         // Bottom column labels
         System.out.print("   ");
-        for (char col = 'a'; col <= 'h'; col++) {
+        for (int i = 0; i < 8; i++) {
+            char col = (char) ('a' + (flip ? 7 - i : i));
             System.out.print(labels + col + "  " + reset);
         }
         System.out.println();

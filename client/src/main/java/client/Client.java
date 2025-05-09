@@ -168,6 +168,8 @@ public class Client {
     }
 
     private void runJoinGame(String userColor) {
+        runListGames();
+
         if (gamesList.isEmpty()) {
             System.out.println("Games list is empty. Create a game name before joining one.");
             return;
@@ -185,12 +187,72 @@ public class Client {
             int gameID = gamesList.get(index).gameID();
             server.joinGame(authToken, new JoinGameRequest(userColor, gameID));
             System.out.println("Game joined!");
+
+            drawBoard();
+
         } catch (NumberFormatException error) {
             System.out.println("Enter a valid game number");
         } catch (Exception error) {
             System.out.println("Failed to join game... " + error.getMessage());
         }
     }
+
+    public void drawBoard() {
+        // ANSI chars styling
+        String reset = "\033[0m";
+        String labels = "\033[38;2;89;60;40m";              // brown
+        String darkSquares = "\033[48;2;89;60;40m";         // brown
+        String lightSquares = "\033[48;2;220;201;163m";     // sandy
+        String whitePieceColor = "\033[38;2;255;255;255m";  // white
+        String blackPieceColor = "\033[38;2;0;0;0m";        // black
+
+        String[] whitePieces = {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"};
+        String[] blackPieces = {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"};
+
+        // Column labels after indent (3 chars)
+        System.out.print("   ");
+        for (char col = 'a'; col <= 'h'; col++) {
+            System.out.print(labels + col + "  " + reset);
+        }
+        System.out.println();
+
+        // row labels left side
+        for (int row = 0; row < 8; row++) {
+            System.out.print(labels + (8 - row) + " " + reset);
+            for (int col = 0; col < 8; col++) {
+                // every other square rotating color
+                String board = ((row + col) % 2 == 0) ? lightSquares : darkSquares;
+                String piece = " ";
+                // add black pieces to row 8 (8-0 = row 8)
+                if (row == 0) {
+                    piece = blackPieceColor + blackPieces[col];
+                }
+                // add black pawns to row 7 (8-1= row 7)
+                else if (row == 1) {
+                    piece = blackPieceColor + "♟";
+                }
+                // add white pawns to row 2 (8-6= row 2)
+                else if (row == 6) {
+                    piece = whitePieceColor + "♟";
+                }
+                // add normal white pieces to row 1 (8-7= row 1)
+                else if (row == 7) {
+                    piece = whitePieceColor + whitePieces[col];
+                }
+
+                System.out.print(board + " " + piece + " " + reset);
+            }
+            System.out.println();
+        }
+
+        // Bottom column labels
+        System.out.print("   ");
+        for (char col = 'a'; col <= 'h'; col++) {
+            System.out.print(labels + col + "  " + reset);
+        }
+        System.out.println();
+    }
+
 
     // run client UI
     public static void main(String[] args) {

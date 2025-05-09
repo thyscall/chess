@@ -55,7 +55,7 @@ public class Client {
             case "create game" -> runCreateGame();
             case "list games" -> runListGames();
             case "play game" -> runJoinGame();
-            case "observe game" -> runJoinGame();
+            case "observe game" -> runObserveGame();
 
             case "quit" -> {
                 System.out.println("See ya!");
@@ -65,6 +65,35 @@ public class Client {
         }
     }
 
+    private void runObserveGame() {
+        runListGames();
+
+        if (gamesList.isEmpty()) {
+            System.out.println("No games available to observe!");
+            return;
+        }
+        System.out.print("Choose a game number to observe it: ");
+        int index;
+        try {
+            index = Integer.parseInt(scanner.nextLine().trim()) -1;
+            if (index < 0 || index >= gamesList.size()) {
+                System.out.println("That's not a valid game number. Try again");
+                return;
+            }
+        } catch (NumberFormatException error) {
+            System.out.println("Enter a valid game number");
+            return;
+        }
+
+        int gameID = gamesList.get(index).gameID();
+        try {
+            server.joinGame(authToken, new JoinGameRequest(null, gameID));
+            System.out.println("Observing game...");
+            drawBoard(false);
+        } catch (Exception error) {
+            System.out.println("Sorry, unable to observe game...");
+        }
+    }
 
 
     private List<GameData> gamesList = new ArrayList<>();

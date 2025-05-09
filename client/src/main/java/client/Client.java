@@ -242,41 +242,43 @@ public class Client {
                 String boardColor = ((normRow + normCol) % 2 == 0) ? darkSquares : lightSquares;
                 String piece = " ";
 
-                if (!flip) {
-                    // add black pieces to row 8 (8-0 = row 8)
+                if (!flip) { // normal board
+                    // white pieces on row 1 of game board, row 0 in back end
                     if (normRow == 0) {
                         piece = whitePieceColor + whitePieces[normCol];
                     }
-                    // add black pawns to row 7 (8-1= row 7)
+                    // white pawns on row 2 of board, row 1 in back end
                     else if (normRow == 1) {
                         piece = whitePieceColor + "♟";
                     }
-                    // add white pawns to row 2 (8-6= row 2)
+                    // add black pawns to row 7, row 6 in back end
                     else if (normRow == 6) {
                         piece = blackPieceColor + "♟";
                     }
-                    // add normal white pieces to row 1 (8-7= row 1)
+                    // add normal black pieces to row 8, row 7 in back end
                     else if (normRow == 7) {
                         piece = blackPieceColor + blackPieces[normCol];
                     }
                 } else {
-                    if (normRow == 0) {
+                    if (normRow == 7) {
                         piece = blackPieceColor + blackPieces[normCol];
                     }
-                    else if (normRow == 1) {
+                    else if (normRow == 6) {
                         piece = blackPieceColor + "♟";
                     }
-                    else if (normRow == 6) {
+                    else if (normRow == 1) {
                         piece = whitePieceColor + "♟";
                     }
-                    else if (normRow == 7) {
+                    else if (normRow == 0) {
                         piece = whitePieceColor + whitePieces[normCol];
                     }
                 }
 
                 System.out.print(boardColor + " " + piece + " " + reset);
             }
-            System.out.print(labels + (flip ? row + 1 : 8 - row) + " " + reset);
+            // right side vert labels
+            System.out.print(" " + labels + (flip ? row + 1 : 8 - row) + reset);
+            System.out.println();
         }
 
         // Bottom column labels

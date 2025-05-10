@@ -1,6 +1,7 @@
 package server.websocket;
 
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import model.*;
 import org.eclipse.jetty.websocket.api.*;
@@ -9,6 +10,7 @@ import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import dataaccess.*;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
@@ -72,10 +74,23 @@ public class WSServer {
 
     }
 
-    private void broadcast(int gameID, Object notification) {
+    private void broadcast(int gameID, ServerMessage message) {
+        // for all sessions that are in the set, send a message to them unless the set is null
+
+        Set<Session> sessions = gameSessions.get(gameID);
+
+        if (sessions != null) {
+            sessions.forEach(s -> send(s, message));
+        }
     }
 
-    private void send(Session session, Object error) {
+    private void send(Session session, ServerMessage message) {
+        try {
+            // send java obj -> json -> client
+            session.getRemote().sendString(gson.toJson(message));
+        } catch (IOException error) {
+            error.printStackTrace();
+        }
     }
 
 
@@ -94,6 +109,21 @@ public class WSServer {
     }
 
     private void handleMakeMove(Session session, UserGameCommand command) {
+        try {
+            // verify the game number
+            GameData game = db.getGame(command.gameID);
+            ChessGame chessGame = game.game();
+            // move
+            chessGame.makeMove(command.move);
+            db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), chessGame));
+
+            // update real time using ws
+            broadcast(command.getGameID(), ServerMessage.loadGame(chessGame));
+            // output move that was just made
+            broadcast(command.getGameID(), ServerMessage.notification("Move made! " + command.move.toString()));
+        } catch (Exception error) {
+            send(session, ServerMessage.error("Move error: " + error.getMessage()));
+        }
     }
 
 

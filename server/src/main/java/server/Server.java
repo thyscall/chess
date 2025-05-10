@@ -5,6 +5,7 @@ import dataaccess.DataAccessException;
 import dataaccess.MemoryDataAccess;
 import dataaccess.MySQLDataAccess;
 import spark.*;
+import server.websocket.WSServer;
 
 public class Server {
 
@@ -23,6 +24,9 @@ public class Server {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        // register websocket
+        Spark.webSocket("/ws", WSServer.class);
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", new ClearHandler(db)); // Clears the database. Removes all users, games, and authTokens.

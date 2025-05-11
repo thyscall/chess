@@ -1,6 +1,7 @@
 package client;
 
 import model.*;
+import websocket.commands.UserGameCommand;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,9 @@ public class Client {
     private final ServerFacade server;
     private final Scanner scanner;
     private String authToken = null;
+    private WSClient wsClient;
+    private Integer thisGameID = null;
+    private List<GameData> gamesList = new ArrayList<>();
 
     public Client(String serverUrl) {
         this.server = new ServerFacade(serverUrl);
@@ -95,9 +99,6 @@ public class Client {
         }
     }
 
-
-    private List<GameData> gamesList = new ArrayList<>();
-
     private void runListGames() {
         try {
             var result = server.listGames(authToken);
@@ -136,7 +137,7 @@ public class Client {
     }
 
     private void runLogin() {
-        // get username, password, and email
+        // get username, password, and email, shown in console UI
         System.out.print("username: ");
         String username = scanner.nextLine().trim();
         System.out.print("password: ");
@@ -195,6 +196,7 @@ public class Client {
             System.out.println("Create game total failure... " + error.getMessage());
         }
     }
+
 
     private void runJoinGame() {
         runListGames();
@@ -317,6 +319,54 @@ public class Client {
             System.out.print(labels + col + "  " + reset);
         }
         System.out.println();
+    }
+
+
+    // *** NOT FULLY IMPLEMENT. REVISIT ***
+    public void gameplay() {
+        // help menu that shows command options
+
+        // while loop that evaluates UserGameCommands
+        while (true) {
+            System.out.print("Game > ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            String[] inWords = input.split(); // *** WHAT REGEX NEEDED??
+            // don't look at empty input
+            if (inWords.length == 0) {
+                continue;
+            }
+            // check input to see what commands are given in command line after parsed
+            switch (inWords[0]) {
+                // if MOVE, send command through websocket
+                case "move" -> {
+                    if (inWords.length != 3) {
+                        System.out.println("Use this pattern: move g2 g3"); // pawn move as example
+                        break;
+                    }
+                }
+                // if LEAVE, send command and break loop
+                case "leave" -> {
+                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, thisGameID));
+                    return;
+                }
+                // if RESIGN, send command through websocket
+                case "resign" -> {
+                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, thisGameID));
+                }
+                case "help" -> {
+                    System.out.println("""
+                            move        >>> make a move
+                            resign      >>> resign from the game
+                            leave       >>> exit the game
+                            help        >>> show this menu
+                            """);
+                }
+            }
+        }
+
+
+
+        // highlight possible moves
     }
 
 

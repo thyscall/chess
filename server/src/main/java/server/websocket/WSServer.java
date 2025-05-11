@@ -2,6 +2,7 @@ package server.websocket;
 
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import model.*;
 import org.eclipse.jetty.websocket.api.*;
@@ -11,6 +12,7 @@ import websocket.messages.ServerMessage;
 import dataaccess.*;
 
 import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
@@ -22,8 +24,9 @@ public class WSServer {
 
 
     // use concurrent hm to allow for multiple records happening at a time
-    // set of client sessions
+    // map of client sessions and their usernames
     private static final ConcurrentHashMap<Integer, Set<Session>> gameSessions = new ConcurrentHashMap<>();
+    private static final Map<Session, String> sessionUsers = new ConcurrentHashMap<>();
 
 
     // make web socket connections
@@ -42,16 +45,28 @@ public class WSServer {
     // helpers for each command functionality
     @OnWebSocketMessage
     public void wsMessage( Session session, String message) {
-        UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
-        switch (command.getCommandType()) {
-            case CONNECT -> handleConnect(session, command);
-            case MAKE_MOVE -> handleMakeMove(session, command);
-            case LEAVE -> handleLeave(session, command);
-            case RESIGN -> handleResign(session, command);
+        try {
+            UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
+            AuthData auth = db.getAuth(command.getAuthToken());
+
+            if (auth == null) {
+                send(session, ServerMessage.error("Error: Invalid auth token"));
+                return;
+            }
+            sessionUsers.put(session, auth.username());
+
+            switch (command.getCommandType()) {
+                case CONNECT -> handleConnect(session, command, auth.username());
+                case MAKE_MOVE -> handleMakeMove(session, message, command, auth.username());
+                case LEAVE -> handleLeave(session, command);
+                case RESIGN -> handleResign(session, command, auth.username());
+            }
+        } catch ( Exception error) {
+            send(session, ServerMessage.error("Error: " + error.getMessage()));
         }
     }
 
-    private void handleConnect(Session session, UserGameCommand command) {
+    private void handleConnect(Session session, UserGameCommand command, String username) {
         // add new game entry
         // add client to list of observers
         // empty set until someone joins as observers
@@ -65,8 +80,16 @@ public class WSServer {
             GameData game = db.getGame(gameID);
             // show board
             session.getRemote().sendString(gson.toJson(ServerMessage.loadGame(game.game())));
+            String who;
+            if (username.equals(game.whiteUsername())) {
+                who = "white player";
+            } else if (username.equals(game.blackUsername())) {
+                who = "black player";
+            } else {
+                who = "observer";
+            }
             // tell all other observers
-            broadcast(gameID, ServerMessage.notification("Someone joined as player or observer"));
+            broadcast(gameID, ServerMessage.notification(username + " joined as player or observer"));
             // give error message
         } catch (Exception error) {
             send(session, ServerMessage.error("Error loading game: " + error.getMessage()));
@@ -80,7 +103,9 @@ public class WSServer {
         Set<Session> sessions = gameSessions.get(gameID);
 
         if (sessions != null) {
-            sessions.forEach(s -> send(s, message));
+            for (Session session : sessions) {
+                send(session, message);
+            }
         }
     }
 
@@ -94,8 +119,17 @@ public class WSServer {
     }
 
 
-    private void handleResign(Session session, UserGameCommand command) {
-        broadcast(command.gameID, ServerMessage.notification("A user has resigned..."));
+    private void handleResign(Session session, UserGameCommand command, String username) {
+        try {
+            GameData game = db.getGame(command.gameID);
+            ChessGame updatedGame = game.game();
+            updatedGame.setGameOver(true);
+
+            db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), updatedGame));
+            broadcast(command.getGameID(), ServerMessage.notification(username + " resigned from the game!"));
+        } catch (Exception error) {
+            send(session, ServerMessage.error("Error resigning: " + error.getMessage()));
+        }
     }
 
     private void handleLeave(Session session, UserGameCommand command) {
@@ -104,39 +138,56 @@ public class WSServer {
         // notify players/observers that someone left
         if (sessions != null) {
             sessions.remove(session);
-            broadcast(command.getGameID(), ServerMessage.notification("Someone has left the game"));
         }
+        // then remove users in session
+        sessionUsers.remove(session);
+        broadcast(command.getGameID(), ServerMessage.notification("Someone has left the game"));
     }
 
-    private void handleMakeMove(Session session, UserGameCommand command) {
+    private void handleMakeMove(Session session, String message, UserGameCommand command, String username) {
         try {
+            // get the move
+            var parsed = gson.fromJson(message, UserGameCommand.class);
+            ChessMove move = parsed.getMove();
             // verify the game number
-            GameData game = db.getGame(command.gameID);
+            GameData game = db.getGame(command.getGameID());
             ChessGame chessGame = game.game();
-            // move
-            chessGame.makeMove(command.move);
+            // actual move happens
+            chessGame.makeMove(move);
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), chessGame));
 
             // update real time using ws
             broadcast(command.getGameID(), ServerMessage.loadGame(chessGame));
             // output move that was just made
-            broadcast(command.getGameID(), ServerMessage.notification("Move made! " + command.move.toString()));
+            broadcast(command.getGameID(), ServerMessage.notification(username + " made a move! " + move));
+
+            // notify if in checkmate or check
+            if (chessGame.isInCheckmate(chessGame.getTeamTurn())) {
+                broadcast(command.getGameID(), ServerMessage.notification("Checkmate! " + chessGame.getTeamTurn() + "loses."));
+            } else if (chessGame.isInCheck(chessGame.getTeamTurn())) {
+                broadcast(command.getGameID(), ServerMessage.notification(chessGame.getTeamTurn() + " is in check."));
+
+            }
         } catch (Exception error) {
             send(session, ServerMessage.error("Move error: " + error.getMessage()));
         }
     }
 
-
-
     // notify when web socket is closed
     @OnWebSocketClose
     public void wsClosed(Session session, String message) {
+        sessionUsers.remove(session);
+        // close all sessions
+        for (Set<Session> sessions : gameSessions.values()) {
+            sessions.remove(session);
+        }
         System.out.println("WebSocked from " + session + "closed: " + message);
     }
 
     // notify websocket error
     @OnWebSocketError
-    public void wsError() {
+    public void wsError(Session session, Throwable error) {
+        System.err.println(("Websocket error in session " + session + ":" + error.getMessage()));
     }
 
 }

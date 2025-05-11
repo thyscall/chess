@@ -11,19 +11,11 @@ import java.util.Objects;
  * methods.
  */
 public class ServerMessage {
-    ServerMessageType serverMessageType;
+    private final ServerMessageType serverMessageType;
+    private ChessGame game;
+    private String message;
+    private String errorMess;
 
-    public static ServerMessage loadGame(ChessGame game) {
-        return null;
-    }
-
-    public static ServerMessage notification(String s) {
-        return null;
-    }
-
-    public static ServerMessage error(String s) {
-        return null;
-    }
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -35,8 +27,38 @@ public class ServerMessage {
         this.serverMessageType = type;
     }
 
+    public static ServerMessage loadGame(ChessGame game) {
+        ServerMessage text = new ServerMessage(ServerMessageType.LOAD_GAME);
+        text.game = game;
+        return text;
+    }
+
+    public static ServerMessage notification(String message) {
+        ServerMessage text = new ServerMessage(ServerMessageType.NOTIFICATION);
+        text.message = message;
+        return text;
+    }
+
+    public static ServerMessage error(String errorMess) {
+        ServerMessage text = new ServerMessage(ServerMessageType.ERROR);
+        text.errorMess = errorMess;
+        return text;
+    }
+
     public ServerMessageType getServerMessageType() {
         return this.serverMessageType;
+    }
+
+    public ChessGame getGame() {
+        return game;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getErrorMess() {
+        return errorMess;
     }
 
     @Override

@@ -304,7 +304,7 @@ public class Client implements ServerMessageObserver {
                 // Allows the user to input the piece for which they want to highlight legal moves.
                 // The selected piece’s current square and all squares it can legally move to are highlighted.
                 // This is a local operation and has no effect on remote users’ screens
-                case "highlight legal moves" -> {
+                case "highlight" -> {
                     System.out.println("Enter square (ex: g4");
                     String sqInput = scanner.nextLine().trim();
                     try {

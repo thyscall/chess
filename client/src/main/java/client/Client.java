@@ -49,7 +49,7 @@ public class Client {
         String userInput = scanner.nextLine().trim().toLowerCase();
 
         switch (userInput) {
-            case "help" -> loginHelp();
+            case "help" -> logoutHelp();
             case "logout" -> runLogout();
             // functionality post auth
             case "create game" -> runCreateGame();
@@ -114,13 +114,23 @@ public class Client {
                 );
             }
         } catch (Exception error) {
-            System.out.println("Failed to list games: " + error.getMessage());
+            System.out.println("Failed to list games");
         }
     }
 
 
     // login menu, what user will see (UI)
     private void loginHelp() {
+        System.out.println("""
+                Commands:
+                - help          >>> show this help menu
+                - register      >>> create an account
+                - login         >>> enter your account
+                - quit          >>> exit chess
+                """);
+    }
+
+    private void logoutHelp() {
         System.out.println("""
                 Commands:
                 - help          >>> show this help menu
@@ -148,7 +158,7 @@ public class Client {
             authToken = authData.authToken();
             System.out.println(authData.username() + " logged in!");
         } catch (Exception error) {
-            System.out.println("Registration failed... " + error.getMessage());
+            System.out.println("Registration failed... ");
         }
     }
 
@@ -168,7 +178,7 @@ public class Client {
             authToken = authData.authToken();
             System.out.println(authData.username() + " logged in!");
         } catch (Exception error) {
-            System.out.println("Registration failed... " + error.getMessage());
+            System.out.println("Registration failed... ");
         }
     }
 
@@ -180,7 +190,7 @@ public class Client {
             authToken = null;
             System.out.println("Log out successful!");
         } catch (Exception error) {
-            System.out.println("Logout total failure... " + error.getMessage());
+            System.out.println("Logout total failure... ");
         }
     }
 
@@ -190,9 +200,9 @@ public class Client {
 
         try {
             var result = server.createGame(authToken, new CreateGameRequest(gameName));
-            System.out.println("New Game Created! ID: " + result.gameID());
+            System.out.println("New Game Created!");
         } catch (Exception error) {
-            System.out.println("Create game total failure... " + error.getMessage());
+            System.out.println("Create game total failure... ");
         }
     }
 
@@ -236,7 +246,7 @@ public class Client {
             // then draw board
             drawBoard(userTeamColor.equals("black"));
         } catch (Exception error) {
-            System.out.println("Failed to join game... " + error.getMessage());
+            System.out.println("Failed to join game... ");
         }
     }
 

@@ -20,7 +20,7 @@ public class JoinGameService {
                 return "Error: unauthorized";
             }
             // legit player & game ?
-            if (req.gameID() == null) {
+            if (req.gameID() == null || req.playerColor() == null) {
                 return "Error: bad request";
             }
             // find game in db
@@ -31,11 +31,6 @@ public class JoinGameService {
 
             String username = auth.username();
 
-            // allow for null team color to observe game (phase 5)
-            if (req.playerColor() == null) {
-                System.out.println("Observer joined " + req.gameID() + "!");
-                return null;
-            }
 
             // check user color and if authenticated
             // if someone already joined as white, null

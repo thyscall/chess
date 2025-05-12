@@ -1,15 +1,14 @@
 package client;
 
-import chess.ChessGame;
-import chess.ChessMove;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 import model.*;
 import websocket.commands.UserGameCommand;
 
 import java.util.*;
 
-public class Client {
+import websocket.messages.ServerMessage;
+
+public class Client implements ServerMessageObserver {
     private final ServerFacade server;
     private final Scanner scanner;
     private String authToken = null;
@@ -100,7 +99,7 @@ public class Client {
             isFlipped = false;
 
             // get current board
-            ChessGame thisGameBoard = server.getGame(authToken, thisGameID).game();
+            ChessGame thisGameBoard = server.getGame(authToken, gameID).game();
 
             // draw board without highlights
             drawBoard(thisGameBoard, isFlipped, Set.of(), null);
@@ -244,6 +243,7 @@ public class Client {
         int gameID = gamesList.get(index).gameID();
         try {
             server.joinGame(authToken, new JoinGameRequest(userTeamColor, gameID));
+            thisGameID = gameID;
             System.out.println("Game joined as " + userTeamColor + "!");
 
             isFlipped = userTeamColor.equals("black");
@@ -262,6 +262,7 @@ public class Client {
 
     private void gameplay() {
         // help menu that shows command options
+        System.out.println("Enter 'help' to see gameplay commands");
 
         // while loop that evaluates UserGameCommands
         while (true) {
@@ -280,7 +281,15 @@ public class Client {
                         System.out.println("Use this pattern: move g2 g3"); // pawn move as example
                         break;
                     }
-                    // *** REVISIT add move functionality, try catch
+                    try {
+                        // 'from ___ position to ___ position' using parsed input
+                        ChessMove move = new ChessMove(parsePos(inWords[1]), parsePos(inWords[2]), null);
+                        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, thisGameID);
+                        command.setMove(move);
+                        wsClient.sendCommand(command);
+                    } catch (Exception error) {
+                        System.out.println("Invalid move command. Example: move g2 g4");
+                    }
                 }
                 // if LEAVE, send command and break loop
                 case "leave" -> {
@@ -308,10 +317,17 @@ public class Client {
 
                 }
                 // Redraws the chess board upon the user’s request.
-                case "redraw board" -> {
-                    // *** REVISIT add functionality try catch
+                case "redraw" -> {
+                    // add functionality try catch
                     // getGame, drawBoard without highlights
                     // error if no redraw
+                    try {
+                        var game = server.getGame(authToken, thisGameID).game();
+                        // board with no highlights
+                        drawBoard(game, isFlipped, Set.of(), null);
+                    } catch (Exception error) {
+                        System.out.println("Could not redraw board");
+                    }
                 }
 
                 case "help" -> {
@@ -329,13 +345,29 @@ public class Client {
         }
     }
 
-    private ChessPosition parsePos(String trim) {
-        // *** REVISIT
+    private ChessPosition parsePos(String input) {
+        // check for len = 2 "g2"
+        if (input.length() != 2) {
+            throw new IllegalArgumentException("Invalid format. Use something like 'g2'");
+        }
+        char colChar = input.charAt(0); // column identified in first character
+        char rowChar = input.charAt(1); // row identified in first character
+
+        if (colChar < 'a' || colChar > 'h' || rowChar < '1' || rowChar > '8') {
+            throw new IllegalArgumentException("Invalid square position. Enter coordinates found on the board.");
+        }
+        // change col value from string/letter to int row for backend
+        // row will still be number, but change from string to int
+        int col = colChar - 'a' + 1;
+        int row = Character.getNumericValue(rowChar);
+
+        return new ChessPosition(row, col);
     }
 
     private void highlightMoves(ChessPosition pos) {
         try {
-            var game = server.getGame(thisGameID).game(); // *** REVISIT type
+            // get most recent game condition
+            ChessGame game = server.getGame(authToken, thisGameID).game();
             var moves = game.validMoves(pos);
 
             // select and highlight actual squares for possible moves
@@ -364,9 +396,7 @@ public class Client {
         String yellowHighlight = "\033[48;2;255;255;0m";    // yellow
         String greenHighlight = "\033[48;2;0;255;0m";      // green
 
-        // not needed for Phase 6, keep in case
-//        String[] whitePieces = {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"};
-//        String[] blackPieces = {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"};
+        ChessBoard board = game.getBoard();
 
         // Column labels after indent (3 chars)
         System.out.print("   ");
@@ -388,7 +418,9 @@ public class Client {
                 String sqColor = ((normRow + normCol) % 2 == 0) ? darkSquares : lightSquares;
 
                 // legal move highlights
-                if (selection != null && selection.equals(thisPos)) {
+                if (selection != null && thisPos.equals(selection)) { // leave null option in case observer or redraw
+                    sqColor = yellowHighlight;
+                } else if (highlights != null && highlights.contains(thisPos)) {
                     sqColor = greenHighlight;
                 }
 
@@ -399,31 +431,42 @@ public class Client {
                     String color = (piece.getTeamColor() == ChessGame.TeamColor.WHITE) ? whitePieceColor : blackPieceColor;
 
                     pieceIcon = switch (piece.getPieceType()) {
-                        case KING -> color + "♔";
-                        case QUEEN -> color + "♕";
-                        case ROOK -> color + "♖";
-                        case BISHOP -> color + "♗";
-                        case KNIGHT -> color + "♘";
-                        case PAWN -> color + "♙";
+                        case KING -> color + "♚";
+                        case QUEEN -> color + "♛";
+                        case ROOK -> color + "♜";
+                        case BISHOP -> color + "♝";
+                        case KNIGHT -> color + "♞";
+                        case PAWN -> color + "♟";
                     };
                 }
                 // print square and piece to board
                 System.out.print(sqColor + " " + pieceIcon + " " + reset);
-                // right side vert labels
-                System.out.print(" " + labels + (isFlipped ? row + 1 : 8 - row) + reset);
-                System.out.println();
             }
-
-            // Bottom column labels
-            System.out.print("   ");
-            for (int i = 0; i < 8; i++) {
-                char col = (char) ('a' + (isFlipped ? 7 - i : i));
-                System.out.print(labels + col + "  " + reset);
-            }
+            // right side vert labels
+            System.out.print(" " + labels + (isFlipped ? row + 1 : 8 - row) + reset);
             System.out.println();
         }
+    // Bottom column labels
+    System.out.print("   ");
+    for (int i = 0; i < 8; i++) {
+        char col = (char) ('a' + (isFlipped ? 7 - i : i));
+        System.out.print(labels + col + "  " + reset);
     }
+    System.out.println();
+}
 
+    @Override
+    public void notifyMessage(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                drawBoard(message.getGame(), isFlipped, Set.of(), null);
+            }
+            case NOTIFICATION -> {
+                System.out.println(message.getMessage());
+            }
+            case ERROR -> System.err.println(message.getErrorMessage());
+        }
+    }
 
     // run client UI
     public static void main(String[] args) {

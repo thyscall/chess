@@ -21,8 +21,6 @@ public class WSServer {
 
     private final DataAccess db = new MySQLDataAccess();
     private final Gson gson = new Gson();
-
-
     // use concurrent hm to allow for multiple records happening at a time
     // map of client sessions and their usernames
     private static final ConcurrentHashMap<Integer, Set<Session>> gameSessions = new ConcurrentHashMap<>();
@@ -37,7 +35,7 @@ public class WSServer {
     // notification when websocket is init
     @OnWebSocketConnect
     public void wsConnected(Session session) {
-        System.out.println("WebSocket connected to " + session);
+        System.out.println("WebSocket connected to " + session.getRemoteAddress().getAddress());
     }
 
     // notification when message sent + description
@@ -45,6 +43,7 @@ public class WSServer {
     // helpers for each command functionality
     @OnWebSocketMessage
     public void wsMessage( Session session, String message) {
+        System.out.println("Received message: " + message);
         try {
             UserGameCommand command = gson.fromJson(message, UserGameCommand.class);
             AuthData auth = db.getAuth(command.getAuthToken());
@@ -175,13 +174,13 @@ public class WSServer {
 
     // notify when web socket is closed
     @OnWebSocketClose
-    public void wsClosed(Session session, String message) {
+    public void wsClosed(Session session, int status, String why) {
         sessionUsers.remove(session);
         // close all sessions
         for (Set<Session> sessions : gameSessions.values()) {
             sessions.remove(session);
         }
-        System.out.println("WebSocked from " + session + "closed: " + message);
+        System.out.println("WebSocket closed: " + why);
     }
 
     // notify websocket error

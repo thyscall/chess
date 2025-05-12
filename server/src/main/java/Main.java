@@ -10,7 +10,5 @@ public class Main {
         } catch (Exception error) {
             System.err.println("Server start failed: " + error.getMessage());
         }
-//        var piece = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-//        new Server().run(8080);
     }
 }

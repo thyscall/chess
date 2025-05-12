@@ -14,7 +14,7 @@ public class ServerMessage {
     private final ServerMessageType serverMessageType;
     private ChessGame game;
     private String message;
-    private String errorMess;
+    private String errorMessage;
 
 
     public enum ServerMessageType {
@@ -41,7 +41,7 @@ public class ServerMessage {
 
     public static ServerMessage error(String errorMess) {
         ServerMessage text = new ServerMessage(ServerMessageType.ERROR);
-        text.errorMess = errorMess;
+        text.errorMessage = errorMess;
         return text;
     }
 
@@ -57,8 +57,8 @@ public class ServerMessage {
         return message;
     }
 
-    public String getErrorMess() {
-        return errorMess;
+    public String getErrorMessage() {
+        return errorMessage;
     }
 
     @Override

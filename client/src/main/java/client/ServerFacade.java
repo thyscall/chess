@@ -90,6 +90,10 @@ public class ServerFacade {
             return new com.google.gson.Gson().fromJson(reader, responseClass);
         }
     }
+
+    public GameData getGame(String authToken, int gameID) throws Exception {
+        return this.makeRequest("GET", "/game" + gameID, null, GameData.class, authToken);
+    }
 }
 
 

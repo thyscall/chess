@@ -12,12 +12,17 @@ import java.util.Collection;
 public class ChessGame {
     private ChessBoard board;
     private TeamColor currentTurn;
+    private boolean isGameOver = false;
 
     // Constructor that initializes a new game with empty board
     public ChessGame() {
         this.currentTurn = TeamColor.WHITE; // white always starts
         this.board = new ChessBoard(); // new chess board
         this.board.resetBoard(); // wipe the board
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
     }
 
     /**
@@ -38,6 +43,10 @@ public class ChessGame {
         this.currentTurn = team;
     }
 
+    public void setGameOver(boolean gameOver) {
+        this.isGameOver = gameOver;
+    }
+
     /**
      * Enum identifying the 2 possible teams in a chess game
      */
@@ -55,6 +64,10 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition); // piece position at the start of the game
+
+        if (isGameOver) {
+            throw new IllegalStateException("Game over!");
+        }
 
         if (piece == null) {
             return new ArrayList<>(); // no piece at position
@@ -120,6 +133,10 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition()); // get piece at its starting position
+
+        if (isGameOver) {
+            throw new IllegalStateException("Game over!");
+        }
 
         if (piece == null || piece.getTeamColor() != currentTurn) { // is there a piece? or is the piece not yours?
             throw new InvalidMoveException("Invalid move: No piece or wrong turn."); // if so, move is invalid

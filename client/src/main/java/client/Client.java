@@ -1,15 +1,21 @@
 package client;
 
+import chess.*;
 import model.*;
+import websocket.commands.UserGameCommand;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
-public class Client {
+import websocket.messages.ServerMessage;
+
+public class Client implements ServerMessageObserver {
     private final ServerFacade server;
     private final Scanner scanner;
     private String authToken = null;
+    private WSClient wsClient;
+    private Integer thisGameID = null;
+    private List<GameData> gamesList = new ArrayList<>();
+    private boolean isFlipped = false;
 
     public Client(String serverUrl) {
         this.server = new ServerFacade(serverUrl);
@@ -89,14 +95,18 @@ public class Client {
         try {
             server.joinGame(authToken, new JoinGameRequest(null, gameID));
             System.out.println("Observing game...");
-            drawBoard(false);
+
+            isFlipped = false;
+
+            // get current board
+            ChessGame thisGameBoard = server.getGame(authToken, gameID).game();
+
+            // draw board without highlights
+            drawBoard(thisGameBoard, isFlipped, Set.of(), null);
         } catch (Exception error) {
             System.out.println("Sorry, unable to observe game...");
         }
     }
-
-
-    private List<GameData> gamesList = new ArrayList<>();
 
     private void runListGames() {
         try {
@@ -144,7 +154,7 @@ public class Client {
     }
 
     private void runLogin() {
-        // get username, password, and email
+        // get username, password, and email, shown in console UI
         System.out.print("username: ");
         String username = scanner.nextLine().trim();
         System.out.print("password: ");
@@ -204,6 +214,7 @@ public class Client {
         }
     }
 
+
     private void runJoinGame() {
         runListGames();
 
@@ -230,6 +241,7 @@ public class Client {
         // get team color from user
         System.out.print("Choose your team. White or Black? ");
         String userTeamColor = scanner.nextLine().trim().toLowerCase();
+        // invalid user not recognized
         if (!userTeamColor.equals("white") && !userTeamColor.equals("black")) {
             System.out.println("I don't recognize that team. White or Black? ");
             return;
@@ -239,16 +251,148 @@ public class Client {
         int gameID = gamesList.get(index).gameID();
         try {
             server.joinGame(authToken, new JoinGameRequest(userTeamColor, gameID));
+            thisGameID = gameID;
             System.out.println("Game joined as " + userTeamColor + "!");
 
-            // then draw board
-            drawBoard(userTeamColor.equals("black"));
+            isFlipped = userTeamColor.equals("black");
+            // websocket phase 6 + Connect
+            wsClient = new WSClient((ServerMessageObserver) this);
+            wsClient.connect("ws://localhost:8080/ws");
+            wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, thisGameID));
+
+            // gameplay implemented in phase 6
+            gameplay();
+
         } catch (Exception error) {
             System.out.println("Failed to join game... ");
         }
     }
 
-    public void drawBoard(boolean flip) {
+    private void gameplay() {
+        // help menu that shows command options
+        System.out.println("Enter 'help' to see gameplay commands");
+
+        // while loop that evaluates UserGameCommands
+        while (true) {
+            System.out.print("Game > ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            String[] inWords = input.split("\\s+"); // *** WHAT REGEX NEEDED??
+            // don't look at empty input
+            if (inWords.length == 0) {
+                continue;
+            }
+            // check input to see what commands are given in command line after parsed
+            switch (inWords[0]) {
+                // if MOVE, send command through websocket
+                case "move" -> {
+                    if (inWords.length != 3) {
+                        System.out.println("Use this pattern: move g2 g3"); // pawn move as example
+                        break;
+                    }
+                    try {
+                        // 'from ___ position to ___ position' using parsed input
+                        ChessMove move = new ChessMove(parsePos(inWords[1]), parsePos(inWords[2]), null);
+                        UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, thisGameID);
+                        command.setMove(move);
+                        wsClient.sendCommand(command);
+                    } catch (Exception error) {
+                        System.out.println("Invalid move command. Example: move g2 g4");
+                    }
+                }
+                // if LEAVE, send command and break loop
+                case "leave" -> {
+                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, thisGameID));
+                    return;
+                }
+                // if RESIGN, send command through websocket
+                case "resign" -> {
+                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, thisGameID));
+                }
+                // highlight possible moves
+                // Allows the user to input the piece for which they want to highlight legal moves.
+                // The selected piece’s current square and all squares it can legally move to are highlighted.
+                // This is a local operation and has no effect on remote users’ screens
+                case "highlight" -> {
+                    System.out.println("Enter square (ex: g4");
+                    String sqInput = scanner.nextLine().trim();
+                    try {
+                        ChessPosition pos = parsePos(scanner.nextLine().trim());
+                        // highlight move helper
+                        highlightMoves(pos);
+                    } catch (Exception error) {
+                        System.out.println("Invalid move request.");
+                    }
+
+                }
+                // Redraws the chess board upon the user’s request.
+                case "redraw" -> {
+                    // add functionality try catch
+                    // getGame, drawBoard without highlights
+                    // error if no redraw
+                    try {
+                        var game = server.getGame(authToken, thisGameID).game();
+                        // board with no highlights
+                        drawBoard(game, isFlipped, Set.of(), null);
+                    } catch (Exception error) {
+                        System.out.println("Could not redraw board");
+                    }
+                }
+
+                case "help" -> {
+                    System.out.println("""
+                            move        >>> make a move
+                            resign      >>> resign from the game
+                            leave       >>> exit the game
+                            highlight   >>> see a piece's legal moves
+                            redraw      >>> refresh board view
+                            help        >>> show this menu
+                            """);
+                }
+                default -> System.out.println("Command not recognized. Try 'help' for valid commands.");
+            }
+        }
+    }
+
+    private ChessPosition parsePos(String input) {
+        // check for len = 2 "g2"
+        if (input.length() != 2) {
+            throw new IllegalArgumentException("Invalid format. Use something like 'g2'");
+        }
+        char colChar = input.charAt(0); // column identified in first character
+        char rowChar = input.charAt(1); // row identified in first character
+
+        if (colChar < 'a' || colChar > 'h' || rowChar < '1' || rowChar > '8') {
+            throw new IllegalArgumentException("Invalid square position. Enter coordinates found on the board.");
+        }
+        // change col value from string/letter to int row for backend
+        // row will still be number, but change from string to int
+        int col = colChar - 'a' + 1;
+        int row = Character.getNumericValue(rowChar);
+
+        return new ChessPosition(row, col);
+    }
+
+    private void highlightMoves(ChessPosition pos) {
+        try {
+            // get most recent game condition
+            ChessGame game = server.getGame(authToken, thisGameID).game();
+            var moves = game.validMoves(pos);
+
+            // select and highlight actual squares for possible moves
+            Set<ChessPosition>highlightSquares = new HashSet<>();
+            for (ChessMove move : moves) {
+                highlightSquares.add(move.getEndPosition());
+            }
+
+            // draw board with highlighted squares
+            drawBoard(game, isFlipped, highlightSquares, pos);
+        } catch (Exception error) {
+            System.out.println("Error highlighting moves: " + error.getMessage());
+        }
+    }
+
+// draw board in UI
+    public void drawBoard(ChessGame game, Boolean isFlipped, Set<ChessPosition> highlights, ChessPosition selection) {
         // ANSI chars styling
         String reset = "\033[0m";
         String labels = "\033[38;2;89;60;40m";              // brown
@@ -256,77 +400,81 @@ public class Client {
         String lightSquares = "\033[48;2;220;201;163m";     // sandy
         String whitePieceColor = "\033[38;2;255;255;255m";  // white
         String blackPieceColor = "\033[38;2;0;0;0m";        // black
+        // possible move highlights phase 6
+        String yellowHighlight = "\033[48;2;255;255;0m";    // yellow
+        String greenHighlight = "\033[48;2;0;255;0m";      // green
 
-        String[] whitePieces = {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"};
-        String[] blackPieces = {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"};
+        ChessBoard board = game.getBoard();
 
         // Column labels after indent (3 chars)
         System.out.print("   ");
         for (int i = 0; i < 8; i++) {
-            char col = (char) ('a' + (flip ? 7-i : i));
+            char col = (char) ('a' + (isFlipped ? 7 - i : i));
             System.out.print(labels + col + "  " + reset);
         }
         System.out.println();
 
-        // row labels left side
+        // row labels
         for (int row = 0; row < 8; row++) {
-            int normRow = flip ? row : 7 - row;
-            System.out.print(labels + (flip ? row + 1 : 8 - row) + " " + reset);
+            int normRow = isFlipped ? row : 7 - row;
+            System.out.print(labels + (isFlipped ? row + 1 : 8 - row) + " " + reset);
 
             for (int col = 0; col < 8; col++) {
-                int normCol = flip ? 7 - col : col;
+                int normCol = isFlipped ? 7 - col : col;
+                ChessPosition thisPos = new ChessPosition(normRow + 1, normCol + 1);
                 // every other square rotating color
-                String boardColor = ((normRow + normCol) % 2 == 0) ? darkSquares : lightSquares;
-                String piece = " ";
+                String sqColor = ((normRow + normCol) % 2 == 0) ? darkSquares : lightSquares;
 
-                if (!flip) { // normal board
-                    // white pieces on row 1 of game board, row 0 in back end
-                    if (normRow == 0) {
-                        piece = whitePieceColor + whitePieces[normCol];
-                    }
-                    // white pawns on row 2 of board, row 1 in back end
-                    else if (normRow == 1) {
-                        piece = whitePieceColor + "♟";
-                    }
-                    // add black pawns to row 7, row 6 in back end
-                    else if (normRow == 6) {
-                        piece = blackPieceColor + "♟";
-                    }
-                    // add normal black pieces to row 8, row 7 in back end
-                    else if (normRow == 7) {
-                        piece = blackPieceColor + blackPieces[normCol];
-                    }
-                } else {
-                    if (normRow == 7) {
-                        piece = blackPieceColor + blackPieces[normCol];
-                    }
-                    else if (normRow == 6) {
-                        piece = blackPieceColor + "♟";
-                    }
-                    else if (normRow == 1) {
-                        piece = whitePieceColor + "♟";
-                    }
-                    else if (normRow == 0) {
-                        piece = whitePieceColor + whitePieces[normCol];
-                    }
+                // legal move highlights
+                if (selection != null && thisPos.equals(selection)) { // leave null option in case observer or redraw
+                    sqColor = yellowHighlight;
+                } else if (highlights != null && highlights.contains(thisPos)) {
+                    sqColor = greenHighlight;
                 }
 
-                System.out.print(boardColor + " " + piece + " " + reset);
+                ChessPiece piece = game.getBoard().getPiece(thisPos);
+                String pieceIcon = " ";
+
+                if (piece != null) {
+                    String color = (piece.getTeamColor() == ChessGame.TeamColor.WHITE) ? whitePieceColor : blackPieceColor;
+
+                    pieceIcon = switch (piece.getPieceType()) {
+                        case KING -> color + "♚";
+                        case QUEEN -> color + "♛";
+                        case ROOK -> color + "♜";
+                        case BISHOP -> color + "♝";
+                        case KNIGHT -> color + "♞";
+                        case PAWN -> color + "♟";
+                    };
+                }
+                // print square and piece to board
+                System.out.print(sqColor + " " + pieceIcon + " " + reset);
             }
             // right side vert labels
-            System.out.print(" " + labels + (flip ? row + 1 : 8 - row) + reset);
+            System.out.print(" " + labels + (isFlipped ? row + 1 : 8 - row) + reset);
             System.out.println();
         }
-
-        // Bottom column labels
-        System.out.print("   ");
-        for (int i = 0; i < 8; i++) {
-            char col = (char) ('a' + (flip ? 7 - i : i));
-            System.out.print(labels + col + "  " + reset);
-        }
-        System.out.println();
+    // Bottom column labels
+    System.out.print("   ");
+    for (int i = 0; i < 8; i++) {
+        char col = (char) ('a' + (isFlipped ? 7 - i : i));
+        System.out.print(labels + col + "  " + reset);
     }
+    System.out.println();
+}
 
+    @Override
+    public void notifyMessage(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                drawBoard(message.getGame(), isFlipped, Set.of(), null);
+            }
+            case NOTIFICATION -> {
+                System.out.println(message.getMessage());
+            }
+            case ERROR -> System.err.println(message.getErrorMessage());
+        }
+    }
 
     // run client UI
     public static void main(String[] args) {

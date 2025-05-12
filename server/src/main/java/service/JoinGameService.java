@@ -38,7 +38,7 @@ public class JoinGameService {
             switch (req.playerColor().toUpperCase()) {
                 case "WHITE" -> {
 
-                    if (game.whiteUsername() != null) {
+                    if (game.whiteUsername() != null && !game.whiteUsername().equals(username)) {
                         return "Error: already taken";
                     }
                     // if not alreay taken, make new obj
@@ -46,7 +46,7 @@ public class JoinGameService {
                 }
                 case "BLACK" -> {
 
-                    if (game.blackUsername() != null) {
+                    if (game.blackUsername() != null && !game.blackUsername().equals(username)) {
                         return "Error: already taken";
                     }
                     // if available, new obj

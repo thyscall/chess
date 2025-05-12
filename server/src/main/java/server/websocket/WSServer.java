@@ -133,11 +133,18 @@ public class WSServer {
     private void handleResign(Session session, UserGameCommand command, String username) {
         try {
             GameData game = db.getGame(command.gameID);
+
+            // do not allow observers to be able to resign
+            if (!username.equals(game.whiteUsername()) && !username.equals(game.blackUsername())) {
+                send(session, ServerMessage.error("Observers not allowed to resign"));
+                return;
+            }
+
             ChessGame updatedGame = game.game();
             updatedGame.setGameOver(true);
 
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), updatedGame));
-            broadcastOthers(command.getGameID(), session, ServerMessage.notification(username + " resigned from the game!"));
+            broadcast(command.getGameID(), ServerMessage.notification(username + " resigned from the game!"));
         } catch (Exception error) {
             send(session, ServerMessage.error("Error resigning: " + error.getMessage()));
         }
@@ -168,8 +175,8 @@ public class WSServer {
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), chessGame));
 
             // update real time using ws
-            broadcastOthers(command.getGameID(), session, ServerMessage.loadGame(chessGame));
-            // output move that was just made
+            broadcast(command.getGameID(), ServerMessage.loadGame(chessGame));
+            // output move that was just made to all except mover
             broadcastOthers(command.getGameID(), session, ServerMessage.notification(username + " made a move! " + move));
 
             // notify if in checkmate or check

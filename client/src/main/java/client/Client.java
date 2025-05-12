@@ -134,8 +134,6 @@ public class Client {
         System.out.println("""
                 Commands:
                 - help          >>> show this help menu
-                - register      >>> create an account
-                - login         >>> enter your account
                 - logout        >>> exit your account
                 - create game   >>> start new game
                 - list games    >>> see all games

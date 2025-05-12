@@ -88,12 +88,24 @@ public class WSServer {
                 who = "observer";
             }
             // tell all other observers
-            broadcast(gameID, ServerMessage.notification(username + " joined as player or observer"));
+            broadcastOthers(gameID, session, ServerMessage.notification(username + " joined as player or observer"));
             // give error message
         } catch (Exception error) {
             send(session, ServerMessage.error("Error loading game: " + error.getMessage()));
         }
 
+    }
+
+    private void broadcastOthers(int gameID, Session notSession, ServerMessage notification) {
+        Set<Session> sessions = gameSessions.get(gameID);
+
+        if (sessions != null) {
+            for (Session sesh : sessions) {
+                if (!sesh.equals(notSession)) {
+                    send(sesh, notification);
+                }
+            }
+        }
     }
 
     private void broadcast(int gameID, ServerMessage message) {
@@ -125,7 +137,7 @@ public class WSServer {
             updatedGame.setGameOver(true);
 
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), updatedGame));
-            broadcast(command.getGameID(), ServerMessage.notification(username + " resigned from the game!"));
+            broadcastOthers(command.getGameID(), session, ServerMessage.notification(username + " resigned from the game!"));
         } catch (Exception error) {
             send(session, ServerMessage.error("Error resigning: " + error.getMessage()));
         }
@@ -156,9 +168,9 @@ public class WSServer {
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), chessGame));
 
             // update real time using ws
-            broadcast(command.getGameID(), ServerMessage.loadGame(chessGame));
+            broadcastOthers(command.getGameID(), session, ServerMessage.loadGame(chessGame));
             // output move that was just made
-            broadcast(command.getGameID(), ServerMessage.notification(username + " made a move! " + move));
+            broadcastOthers(command.getGameID(), session, ServerMessage.notification(username + " made a move! " + move));
 
             // notify if in checkmate or check
             if (chessGame.isInCheckmate(chessGame.getTeamTurn())) {
@@ -174,12 +186,7 @@ public class WSServer {
 
     // notify when web socket is closed
     @OnWebSocketClose
-    public void wsClosed(Session session, int status, String why) {
-        sessionUsers.remove(session);
-        // close all sessions
-        for (Set<Session> sessions : gameSessions.values()) {
-            sessions.remove(session);
-        }
+    public void wsClosed(int status, String why) {
         System.out.println("WebSocket closed: " + why);
     }
 

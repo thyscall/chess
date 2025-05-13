@@ -4,6 +4,8 @@ package server.websocket;
 import chess.*;
 import com.google.gson.Gson;
 import model.*;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import dataaccess.*;
@@ -13,12 +15,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
 
-@ServerEndpoint(value = "/ws")
+@WebSocket
 public class WSServer {
-
     private final DataAccess db = new MySQLDataAccess();
     private final Gson gson = new Gson();
     // use concurrent hm to allow for multiple records happening at a time
@@ -33,15 +32,15 @@ public class WSServer {
     }
 
     // notification when websocket is init
-    @OnOpen
+    @OnWebSocketConnect
     public void wsConnected(Session session) {
-        System.out.println("WebSocket connected to " + session.getId());
+        System.out.println("WebSocket connected to " + session.getRemoteAddress());
     }
 
     // notification when message sent + description
     // use switch for different commands
     // helpers for each command functionality
-    @OnMessage
+    @OnWebSocketMessage
     public void wsMessage( Session session, String message) {
         System.out.println("Received message: " + message);
         try {
@@ -78,17 +77,11 @@ public class WSServer {
         try {
             GameData game = db.getGame(gameID);
             // show board
-            session.getBasicRemote().sendText(gson.toJson(ServerMessage.loadGame(game.game())));
-            String who;
-            if (username.equals(game.whiteUsername())) {
-                who = "white player";
-            } else if (username.equals(game.blackUsername())) {
-                who = "black player";
-            } else {
-                who = "observer";
-            }
+            session.getRemote().sendString(gson.toJson(ServerMessage.loadGame(game.game())));
+            String who = username.equals(game.whiteUsername()) ? "white player" :
+                    username.equals(game.blackUsername()) ? "black player" : "observer";
             // tell all other observers
-            broadcastOthers(gameID, session, ServerMessage.notification(username + " joined as player or observer"));
+            broadcastOthers(gameID, session, ServerMessage.notification(username + " joined as " + who));
             // give error message
         } catch (Exception error) {
             send(session, ServerMessage.error("Error loading game: " + error.getMessage()));
@@ -123,7 +116,7 @@ public class WSServer {
     private void send(Session session, ServerMessage message) {
         try {
             // send java obj -> json -> client
-            session.getBasicRemote().sendText(gson.toJson(message));
+            session.getRemote().sendString(gson.toJson(message));
         } catch (IOException error) {
             error.printStackTrace();
         }
@@ -202,7 +195,7 @@ public class WSServer {
             sendError(session, "Invalid game ID");
             return;
         }
-        
+
         // only allow moves from white or black team players
         boolean isUserWhite = username.equals(game.whiteUsername());
         boolean isUserBlack = username.equals(game.blackUsername());
@@ -260,15 +253,15 @@ public class WSServer {
     }
 
     // notify when web socket is closed
-    @OnClose
-    public void wsClosed(Session session, CloseReason why) {
-        System.out.println("WebSocket closed: " + why.getReasonPhrase());
+    @OnWebSocketClose
+    public void onClose(Session session, int status, String reason) {
+        System.out.println("WebSocket closed: " + reason);
     }
 
     // notify websocket error
-    @OnError
-    public void wsError(Session session, Throwable error) {
-        System.err.println(("Websocket error in session " + session + ":" + error.getMessage()));
+    @OnWebSocketError
+    public void onError(Session session, Throwable error) {
+        System.err.println(("Websocket error:" + error.getMessage()));
     }
 
 }

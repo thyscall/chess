@@ -3,14 +3,15 @@ package client;
 import chess.*;
 import model.*;
 import websocket.commands.UserGameCommand;
-
+import com.google.gson.Gson;
 import java.util.*;
-
 import websocket.messages.ServerMessage;
+import java.io.IOException;
 
-public class Client implements ServerMessageObserver {
+public class Client {
     private final ServerFacade server;
     private final Scanner scanner;
+    private final Gson gson = new Gson();
     private String authToken = null;
     private WSClient wsClient;
     private Integer thisGameID = null;
@@ -256,9 +257,9 @@ public class Client implements ServerMessageObserver {
 
             isFlipped = userTeamColor.equals("black");
             // websocket phase 6 + Connect
-            wsClient = new WSClient((ServerMessageObserver) this);
-            wsClient.connect("ws://localhost:8080/ws");
-            wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, thisGameID));
+            wsClient = new WSClient("ws://localhost:8080/ws", this::handleServerMessage);
+            UserGameCommand connectCommand = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, gameID);
+            wsClient.send(connectCommand);
 
             // gameplay implemented in phase 6
             gameplay();
@@ -267,6 +268,31 @@ public class Client implements ServerMessageObserver {
             System.out.println("Failed to join game... ");
         }
     }
+
+    private void handleServerMessage(String jsonMessage) {
+        ServerMessage message = gson.fromJson(jsonMessage, ServerMessage.class);
+
+        switch (message.getServerMessageType()) {
+            case LOAD_GAME -> {
+                drawBoard(message.getGame(), isFlipped, Set.of(), null);
+            }
+            case NOTIFICATION -> {
+                System.out.println(message.getMessage());
+            }
+            case ERROR -> System.err.println(message.getErrorMessage());
+        }
+    }
+
+    public void sendUserCommand(UserGameCommand command) {
+        try {
+            Integer gameID;
+            UserGameCommand connectCommand = new UserGameCommand(UserGameCommand.CommandType.CONNECT, authToken, thisGameID);
+            wsClient.send(connectCommand);  // Correct way
+        } catch (Exception error) {
+            System.err.println("Failed to send command");
+        }
+    }
+
 
     private void gameplay() {
         // help menu that shows command options
@@ -294,19 +320,19 @@ public class Client implements ServerMessageObserver {
                         ChessMove move = new ChessMove(parsePos(inWords[1]), parsePos(inWords[2]), null);
                         UserGameCommand command = new UserGameCommand(UserGameCommand.CommandType.MAKE_MOVE, authToken, thisGameID);
                         command.setMove(move);
-                        wsClient.sendCommand(command);
+                        sendUserCommand(command);
                     } catch (Exception error) {
                         System.out.println("Invalid move command. Example: move g2 g4");
                     }
                 }
                 // if LEAVE, send command and break loop
                 case "leave" -> {
-                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, thisGameID));
+                    sendUserCommand(new UserGameCommand(UserGameCommand.CommandType.LEAVE, authToken, thisGameID));
                     return;
                 }
                 // if RESIGN, send command through websocket
                 case "resign" -> {
-                    wsClient.sendCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, thisGameID));
+                    sendUserCommand(new UserGameCommand(UserGameCommand.CommandType.RESIGN, authToken, thisGameID));
                 }
                 // highlight possible moves
                 // Allows the user to input the piece for which they want to highlight legal moves.
@@ -314,7 +340,6 @@ public class Client implements ServerMessageObserver {
                 // This is a local operation and has no effect on remote users’ screens
                 case "highlight" -> {
                     System.out.println("Enter square (ex: g4");
-                    String sqInput = scanner.nextLine().trim();
                     try {
                         ChessPosition pos = parsePos(scanner.nextLine().trim());
                         // highlight move helper
@@ -340,12 +365,12 @@ public class Client implements ServerMessageObserver {
 
                 case "help" -> {
                     System.out.println("""
-                            move        >>> make a move
-                            resign      >>> resign from the game
-                            leave       >>> exit the game
-                            highlight   >>> see a piece's legal moves
-                            redraw      >>> refresh board view
-                            help        >>> show this menu
+                            - move        >>> make a move
+                            - resign      >>> resign from the game
+                            - leave       >>> exit the game
+                            - highlight   >>> see a piece's legal moves
+                            - redraw      >>> refresh board view
+                            - help        >>> show this menu
                             """);
                 }
                 default -> System.out.println("Command not recognized. Try 'help' for valid commands.");
@@ -462,19 +487,6 @@ public class Client implements ServerMessageObserver {
     }
     System.out.println();
 }
-
-    @Override
-    public void notifyMessage(ServerMessage message) {
-        switch (message.getServerMessageType()) {
-            case LOAD_GAME -> {
-                drawBoard(message.getGame(), isFlipped, Set.of(), null);
-            }
-            case NOTIFICATION -> {
-                System.out.println(message.getMessage());
-            }
-            case ERROR -> System.err.println(message.getErrorMessage());
-        }
-    }
 
     // run client UI
     public static void main(String[] args) {

@@ -164,24 +164,23 @@ public class WSServer {
             // notify players/observers that someone left
             if (sessions != null) {
                 sessions.remove(session);
-                if (sessions.isEmpty()) {
-                    gameSessions.remove(command.gameID);
-                }
             }
+            String username = sessionUsers.get(session);
+
             // then remove users in session
-            String username = sessionUsers.remove(session);
+            sessionUsers.remove(session);
             GameData gameData = db.getGame(command.gameID);
             boolean updated = false;
 
             // if white resigns
             if (username != null && username.equals(gameData.whiteUsername())) {
-                gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(),gameData.game());
+                gameData = new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(),gameData.game());
                 updated = true;
             }
 
             // if black resigns
             else if (username != null && username.equals(gameData.blackUsername())) {
-                gameData = new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(),gameData.game());
+                gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(),gameData.game());
                 updated = true;
             }
             // update space available for someone else to join

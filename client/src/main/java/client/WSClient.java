@@ -2,68 +2,68 @@ package client;
 
 import com.google.gson.Gson;
 
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.*;
 
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
+import javax.websocket.*;
+import java.io.IOException;
 import java.net.URI;
+import java.util.function.Consumer;
 import java.util.concurrent.Future;
 
-@WebSocket
-public class WSClient {
+public class WSClient extends Endpoint {
     // connect to /ws
     // UserGameCommands: Connect, Make_Move, Resign, Leave
     // receive messages from ServerMessage
     // show messages in UI
-
-    private final Gson gson = new Gson();
-    private final ServerMessageObserver observer;
+    private final Consumer<String> messageHandler;
     private Session session;
 
-    public WSClient(ServerMessageObserver observer) {
-        this.observer = observer;
-    }
+    public WSClient(String serverUrl, Consumer<String> messageHandler) throws Exception {
+        this.messageHandler = messageHandler;
 
-    // connect to /ws endpoint
-    public void connect(String serverUri) throws Exception {
-        WebSocketClient client = new WebSocketClient();
-        client.start();
-        URI uri = new URI(serverUri); // "localhost:8080/ws"
-        Future<Session> future = client.connect(this, uri);
-        session = future.get();
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        container.connectToServer(this, URI.create(serverUrl));
     }
+    @Override
+    public void onOpen(Session session, EndpointConfig config) {
+        this.session = session;
+        System.out.println("WebSocket connected");
 
-    public void sendCommand(UserGameCommand command) {
-        try {
-            if (session != null && session.isOpen()) {
-                String json = gson.toJson(command);
-                session.getRemote().sendString(json);
-            } else {
-                observer.notifyMessage(ServerMessage.error("WebSocket not open"));
+        session.addMessageHandler(String.class, message -> {
+            if (messageHandler != null) {
+                messageHandler.accept(message);
             }
-        } catch (Exception error) {
-            observer.notifyMessage(ServerMessage.error("Could not send command"));
-        }
-    }
-
-    // receive message from server
-    @OnWebSocketMessage
-    public void whenMessage(String message) {
-        ServerMessage text = gson.fromJson(message, ServerMessage.class);
-        observer.notifyMessage(text);
+        });
     }
 
     // notif when websocket is closed
-    @OnWebSocketClose
-    public void whenClosed(int statusCode, String why) {
-        observer.notifyMessage(ServerMessage.notification("WebSocket closed" + why));
+    @Override
+    public void onClose(Session session, CloseReason reason) {
+        System.out.println("Websocket closed");
     }
 
     // when error
-    @OnWebSocketError
-    public void whenError(Throwable why) {
-        observer.notifyMessage(ServerMessage.error("WebSocket error" + why));
+    @Override
+    public void onError(Session session, Throwable throwable) {
+        System.err.println("WebSocket error");
     }
+
+    public void send(String message) throws IOException {
+        if (session != null && session.isOpen()) {
+            session.getBasicRemote().sendText(message);
+        } else {
+            throw new IOException("Websocket failed to open");
+        }
+    }
+
+    public void close() throws IOException {
+        if (session != null) {
+            session.close();
+        }
+    }
+
 }
+// make sure class extends endpoint javax.websocket.endpoint
+// look at petshop communicator
+// web socket instruction

@@ -1,12 +1,9 @@
 package server.websocket;
 
 
-import chess.ChessGame;
-import chess.ChessMove;
+import chess.*;
 import com.google.gson.Gson;
 import model.*;
-import org.eclipse.jetty.websocket.api.*;
-import org.eclipse.jetty.websocket.api.annotations.*;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 import dataaccess.*;
@@ -16,7 +13,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
-@WebSocket
+import javax.websocket.*;
+import javax.websocket.server.ServerEndpoint;
+
+@ServerEndpoint(value = "/ws")
 public class WSServer {
 
     private final DataAccess db = new MySQLDataAccess();
@@ -33,15 +33,15 @@ public class WSServer {
     }
 
     // notification when websocket is init
-    @OnWebSocketConnect
+    @OnOpen
     public void wsConnected(Session session) {
-        System.out.println("WebSocket connected to " + session.getRemoteAddress().getAddress());
+        System.out.println("WebSocket connected to " + session.getId());
     }
 
     // notification when message sent + description
     // use switch for different commands
     // helpers for each command functionality
-    @OnWebSocketMessage
+    @OnMessage
     public void wsMessage( Session session, String message) {
         System.out.println("Received message: " + message);
         try {
@@ -78,7 +78,7 @@ public class WSServer {
         try {
             GameData game = db.getGame(gameID);
             // show board
-            session.getRemote().sendString(gson.toJson(ServerMessage.loadGame(game.game())));
+            session.getBasicRemote().sendText(gson.toJson(ServerMessage.loadGame(game.game())));
             String who;
             if (username.equals(game.whiteUsername())) {
                 who = "white player";
@@ -123,7 +123,7 @@ public class WSServer {
     private void send(Session session, ServerMessage message) {
         try {
             // send java obj -> json -> client
-            session.getRemote().sendString(gson.toJson(message));
+            session.getBasicRemote().sendText(gson.toJson(message));
         } catch (IOException error) {
             error.printStackTrace();
         }
@@ -260,13 +260,13 @@ public class WSServer {
     }
 
     // notify when web socket is closed
-    @OnWebSocketClose
-    public void wsClosed(int status, String why) {
-        System.out.println("WebSocket closed: " + why);
+    @OnClose
+    public void wsClosed(Session session, CloseReason why) {
+        System.out.println("WebSocket closed: " + why.getReasonPhrase());
     }
 
     // notify websocket error
-    @OnWebSocketError
+    @OnError
     public void wsError(Session session, Throwable error) {
         System.err.println(("Websocket error in session " + session + ":" + error.getMessage()));
     }

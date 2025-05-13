@@ -44,7 +44,7 @@ public class WSClient {
                 observer.notifyMessage(ServerMessage.error("WebSocket not open"));
             }
         } catch (Exception error) {
-            observer.notifyMessage(ServerMessage.error("Could not send command: " + error.getMessage()));
+            observer.notifyMessage(ServerMessage.error("Could not send command"));
         }
     }
 

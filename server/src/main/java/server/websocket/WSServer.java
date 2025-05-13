@@ -163,16 +163,37 @@ public class WSServer {
     }
 
     private void handleMakeMove(Session session, String message, UserGameCommand command, String username) {
+        GameData game = getGame(command.gameID);
+        if (game == null) {
+            sendError(session, "Invalid game ID");
+            return;
+        }
+        
+        // only allow moves from white or black team players
+        boolean isUserWhite = username.equals(game.whiteUsername());
+        boolean isUserBlack = username.equals(game.blackUsername());
+        if (!isUserWhite && !isUserBlack) {
+            sendError(session, "Only players can make moves");
+            return;
+        }
+
+        // only make moves if it is players turn
+        ChessGame.TeamColor thisTurn = game.game().getTeamTurn();
+        if ((isUserWhite && thisTurn != ChessGame.TeamColor.WHITE || isUserBlack && thisTurn != ChessGame.TeamColor.BLACK)) {
+            sendError(session, "Not your turn!");
+            return;
+        }
+
         try {
             // get the move
             var parsed = gson.fromJson(message, UserGameCommand.class);
             ChessMove move = parsed.getMove();
             // verify the game number
-            GameData game = db.getGame(command.getGameID());
-            ChessGame chessGame = game.game();
+            GameData gameNum = db.getGame(command.getGameID());
+            ChessGame chessGame = gameNum.game();
             // actual move happens
             chessGame.makeMove(move);
-            db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), chessGame));
+            db.updateGame(new GameData(gameNum.gameID(), gameNum.whiteUsername(), gameNum.blackUsername(), gameNum.gameName(), chessGame));
 
             // update real time using ws
             broadcast(command.getGameID(), ServerMessage.loadGame(chessGame));
@@ -189,6 +210,19 @@ public class WSServer {
         } catch (Exception error) {
             send(session, ServerMessage.error("Move error: " + error.getMessage()));
         }
+    }
+
+    private GameData getGame(Integer gameID) {
+        try {
+            return db.getGame(gameID);
+        } catch ( DataAccessException error) {
+            error.printStackTrace();
+            return null;
+        }
+    }
+
+    private void sendError(Session session, String error) {
+        send(session, ServerMessage.error(error));
     }
 
     // notify when web socket is closed

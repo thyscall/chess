@@ -22,8 +22,8 @@ public class WSServer {
     private final Gson gson = new Gson();
     // use concurrent hm to allow for multiple records happening at a time
     // map of client sessions and their usernames
-    private static final ConcurrentHashMap<Integer, Set<Session>> gameSessions = new ConcurrentHashMap<>();
-    private static final Map<Session, String> sessionUsers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Integer, Set<Session>> GAME_SESSION = new ConcurrentHashMap<>();
+    private static final Map<Session, String> SESSION_USERS = new ConcurrentHashMap<>();
 
     // make web socket connections
     // follow games with gameID
@@ -48,7 +48,7 @@ public class WSServer {
                 send(session, ServerMessage.error("Error: Invalid auth token"));
                 return;
             }
-            sessionUsers.put(session, auth.username());
+            SESSION_USERS.put(session, auth.username());
 
             switch (command.getCommandType()) {
                 case CONNECT -> handleConnect(session, command, auth.username());
@@ -68,8 +68,8 @@ public class WSServer {
 
         int gameID = command.getGameID();
 
-        gameSessions.putIfAbsent(gameID, ConcurrentHashMap.newKeySet());
-        gameSessions.get(gameID).add(session);
+        GAME_SESSION.putIfAbsent(gameID, ConcurrentHashMap.newKeySet());
+        GAME_SESSION.get(gameID).add(session);
 
         try {
             GameData game = db.getGame(gameID);
@@ -86,7 +86,7 @@ public class WSServer {
     }
 
     private void broadcastOthers(int gameID, Session notSession, ServerMessage notification) {
-        Set<Session> sessions = gameSessions.get(gameID);
+        Set<Session> sessions = GAME_SESSION.get(gameID);
 
         if (sessions != null) {
             for (Session sesh : sessions) {
@@ -100,7 +100,7 @@ public class WSServer {
     private void broadcast(int gameID, ServerMessage message) {
         // for all sessions that are in the set, send a message to them unless the set is null
 
-        Set<Session> sessions = gameSessions.get(gameID);
+        Set<Session> sessions = GAME_SESSION.get(gameID);
 
         if (sessions != null) {
             for (Session session : sessions) {
@@ -146,16 +146,16 @@ public class WSServer {
 
     private void handleLeave(Session session, UserGameCommand command) {
         try {
-            Set<Session> sessions = gameSessions.get(command.gameID);
+            Set<Session> sessions = GAME_SESSION.get(command.gameID);
             // check if user leaves, if so, session set will be null
             // notify players/observers that someone left
             if (sessions != null) {
                 sessions.remove(session);
             }
-            String username = sessionUsers.get(session);
+            String username = SESSION_USERS.get(session);
 
             // then remove users in session
-            sessionUsers.remove(session);
+            SESSION_USERS.remove(session);
             GameData gameData = db.getGame(command.gameID);
             boolean updated = false;
 

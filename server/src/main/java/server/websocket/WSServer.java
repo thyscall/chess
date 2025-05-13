@@ -140,26 +140,61 @@ public class WSServer {
                 return;
             }
 
+            // check if game is over before action
+            if (game.game().isGameOver()) {
+                sendError(session, "Unable to resign. Game is over!");
+                return;
+            }
+
+            //end game when someone resigns
             ChessGame updatedGame = game.game();
             updatedGame.setGameOver(true);
 
             db.updateGame(new GameData(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName(), updatedGame));
             broadcast(command.getGameID(), ServerMessage.notification(username + " resigned from the game!"));
         } catch (Exception error) {
-            send(session, ServerMessage.error("Error resigning: " + error.getMessage()));
+            send(session, ServerMessage.error("Error resigning."));
         }
     }
 
     private void handleLeave(Session session, UserGameCommand command) {
-        Set<Session> sessions = gameSessions.get(command.gameID);
-        // check if user leaves, if so, session set will be null
-        // notify players/observers that someone left
-        if (sessions != null) {
-            sessions.remove(session);
+        try {
+            Set<Session> sessions = gameSessions.get(command.gameID);
+            // check if user leaves, if so, session set will be null
+            // notify players/observers that someone left
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    gameSessions.remove(command.gameID);
+                }
+            }
+            // then remove users in session
+            String username = sessionUsers.remove(session);
+            GameData gameData = db.getGame(command.gameID);
+            boolean updated = false;
+
+            // if white resigns
+            if (username != null && username.equals(gameData.whiteUsername())) {
+                gameData = new GameData(gameData.gameID(), gameData.whiteUsername(), null, gameData.gameName(),gameData.game());
+                updated = true;
+            }
+
+            // if black resigns
+            else if (username != null && username.equals(gameData.blackUsername())) {
+                gameData = new GameData(gameData.gameID(), null, gameData.blackUsername(), gameData.gameName(),gameData.game());
+                updated = true;
+            }
+            // update space available for someone else to join
+            if (updated) {
+                db.updateGame(gameData);
+            }
+
+            broadcast(command.getGameID(), ServerMessage.notification("Someone has left the game"));
+        } catch (Exception error) {
+            send(session, ServerMessage.error("Error leaving game"));
         }
-        // then remove users in session
-        sessionUsers.remove(session);
-        broadcast(command.getGameID(), ServerMessage.notification("Someone has left the game"));
+
+
     }
 
     private void handleMakeMove(Session session, String message, UserGameCommand command, String username) {
@@ -208,7 +243,7 @@ public class WSServer {
 
             }
         } catch (Exception error) {
-            send(session, ServerMessage.error("Move error: " + error.getMessage()));
+            send(session, ServerMessage.error("Move error. Try again"));
         }
     }
 

@@ -1,6 +1,5 @@
-//// make sure class extends endpoint javax.websocket.endpoint
-//// look at petshop communicator
-//// web socket instruction
+// make sure class extends endpoint javax.websocket.endpoint
+// look at pet shop communicator, web socket instruction
 
 package client;
 

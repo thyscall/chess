@@ -119,7 +119,6 @@ public class Client {
         }
     }
 
-
     // login menu, what user will see (UI)
     private void loginHelp() {
         System.out.println("""
@@ -257,9 +256,6 @@ public class Client {
         String lightSquares = "\033[48;2;220;201;163m";     // sandy
         String whitePieceColor = "\033[38;2;255;255;255m";  // white
         String blackPieceColor = "\033[38;2;0;0;0m";        // black
-
-        String yellowHighlight = "\033[48;2;255;255;0m";    // yellow
-        String greenHighlight = "\033[48;2;0;255;0m";      // green
 
         String[] whitePieces = {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"};
         String[] blackPieces = {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"};

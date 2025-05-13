@@ -25,18 +25,15 @@ public class WSServer {
     private static final ConcurrentHashMap<Integer, Set<Session>> gameSessions = new ConcurrentHashMap<>();
     private static final Map<Session, String> sessionUsers = new ConcurrentHashMap<>();
 
-
     // make web socket connections
     // follow games with gameID
     public WSServer() throws DataAccessException {
     }
-
     // notification when websocket is init
     @OnWebSocketConnect
     public void wsConnected(Session session) {
         System.out.println("WebSocket connected to " + session.getRemoteAddress());
     }
-
     // notification when message sent + description
     // use switch for different commands
     // helpers for each command functionality
@@ -86,7 +83,6 @@ public class WSServer {
         } catch (Exception error) {
             send(session, ServerMessage.error("Error loading game: " + error.getMessage()));
         }
-
     }
 
     private void broadcastOthers(int gameID, Session notSession, ServerMessage notification) {
@@ -122,7 +118,6 @@ public class WSServer {
         }
     }
 
-
     private void handleResign(Session session, UserGameCommand command, String username) {
         try {
             GameData game = db.getGame(command.gameID);
@@ -138,7 +133,6 @@ public class WSServer {
                 sendError(session, "Unable to resign. Game is over!");
                 return;
             }
-
             //end game when someone resigns
             ChessGame updatedGame = game.game();
             updatedGame.setGameOver(true);
@@ -185,8 +179,6 @@ public class WSServer {
         } catch (Exception error) {
             send(session, ServerMessage.error("Error leaving game"));
         }
-
-
     }
 
     private void handleMakeMove(Session session, String message, UserGameCommand command, String username) {
@@ -195,7 +187,6 @@ public class WSServer {
             sendError(session, "Invalid game ID");
             return;
         }
-
         // only allow moves from white or black team players
         boolean isUserWhite = username.equals(game.whiteUsername());
         boolean isUserBlack = username.equals(game.blackUsername());
@@ -203,14 +194,12 @@ public class WSServer {
             sendError(session, "Only players can make moves");
             return;
         }
-
         // only make moves if it is players turn
         ChessGame.TeamColor thisTurn = game.game().getTeamTurn();
         if ((isUserWhite && thisTurn != ChessGame.TeamColor.WHITE || isUserBlack && thisTurn != ChessGame.TeamColor.BLACK)) {
             sendError(session, "Not your turn!");
             return;
         }
-
         try {
             // get the move
             var parsed = gson.fromJson(message, UserGameCommand.class);
@@ -232,7 +221,6 @@ public class WSServer {
                 broadcast(command.getGameID(), ServerMessage.notification("Checkmate! " + chessGame.getTeamTurn() + "loses."));
             } else if (chessGame.isInCheck(chessGame.getTeamTurn())) {
                 broadcast(command.getGameID(), ServerMessage.notification(chessGame.getTeamTurn() + " is in check."));
-
             }
         } catch (Exception error) {
             send(session, ServerMessage.error("Move error. Try again"));
